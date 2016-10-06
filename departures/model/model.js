@@ -4,7 +4,8 @@ var model = {
         lng: -6.260192
     },
     stops: [],
-
+    currentStop: -1,
+    buses: [],
 }
 
 function setLocation(lat, lng) {
@@ -24,4 +25,33 @@ function getLocation() {
 
 function setStops(stops) {
     model.stops = stops
+}
+
+function getStops() {
+    return model.stops
+}
+
+function setCurrentStop(stopIndex) {
+    if (stopIndex != model.currentStop) {
+        model.currentStop = stopIndex;
+        return true
+    }
+}
+
+function getCurrentStop() {
+    return model.currentStop
+}
+
+function getCurrentStopPosition() {
+    if (model.currentStop >= 0) {
+        return model.stops[model.currentStop]
+    }
+}
+
+function setBuses(buses) {
+    model.buses = buses
+}
+
+function getBuses() {
+    return model.buses
 }

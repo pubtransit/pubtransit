@@ -33,7 +33,8 @@
 
 view = {
     loc: document.getElementById("loc"),
-    map: null
+    map: null,
+    stopMarkers: []
 };
 
 function showLocation() {
@@ -47,7 +48,60 @@ function showLocation() {
 function initMap() {
     view.map = new google.maps.Map(
         document.getElementById('map'),
-        {center: getLocation(), zoom: 8});
+        {center: getLocation(), zoom: 16});
+}
+
+function dropStopMarkers() {
+    clearStopMarkers();
+    stops = getStops()
+    for (var i = 0; i < stops.length; i++) {
+        addStopMarkerWithTimeout(stops[i], i, i * 200);
+    }
+}
+
+function addStopMarkerWithTimeout(stop, stopIndex, timeout) {
+
+    function dropMarker() {
+        marker = new google.maps.Marker({
+            position: stop, map: view.map,
+            animation: google.maps.Animation.DROP});
+
+        marker.addListener('click', function() {refreshBuses(stopIndex);});
+
+        view.stopMarkers.push(marker);
+    }
+    window.setTimeout(dropMarker, timeout);
+}
+
+function clearStopMarkers() {
+    markers = view.stopMarkers
+    for (var i = 0; i < markers.length; i++) {
+        markers[i].setMap(null);
+    }
+    view.stopMarkers = [];
+}
+
+function showBusesWindow() {
+    closeBusesWindow();
+    busesInfo = [];
+    buses = getBuses()
+    for (var i = 0; i < buses.length; i++) {
+        bus = buses[i]
+        busesInfo.push(JSON.stringify(bus))
+    }
+
+    view.busesWindow = win = new google.maps.InfoWindow();
+    win.setContent(busesInfo.join('<br>'));
+    win.setPosition(getCurrentStopPosition());
+    win.open(view.map);
+}
+
+function closeBusesWindow() {
+    win = view.busesWindow;
+    if (win) {
+        win.close();
+        view.busesWindow = null;
+    }
 }
 
 refreshLocation();

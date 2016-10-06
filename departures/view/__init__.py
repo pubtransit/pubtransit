@@ -6,24 +6,27 @@ Created on 5 Oct 2016
 
 import os
 
-from jinja2 import Template
+from jinja2 import Environment, PackageLoader
+
+import departures
 
 
-_VIEW_DIR = os.path.normpath(os.path.dirname(__file__))
+_ENVIRONMENT = Environment(
+    loader=PackageLoader(package_name=departures.__name__, package_path=''))
 
-_TEMPLATES = {}
+_get_template = _ENVIRONMENT.get_template
+
+_HTML_TEMPLATE = _get_template("view/view.html")
+
+_SCRIPT_TEMPLATES = [
+    _get_template("commons/logging.js"),
+    _get_template("control/control.js"),
+    _get_template("view/view.js"),
+]
 
 
-def get_view_file(template_path, **variables):
-    return _get_template(template_path).render(**variables)
-
-
-def _get_template(template_path):
-    full_template_path = os.path.normpath(
-        os.path.join(_VIEW_DIR, template_path))
-    template = _TEMPLATES.get(full_template_path)
-    if template is None:
-        with open(full_template_path, "rt") as template_file:
-            template = Template(template_file.read())
-            _TEMPLATES[full_template_path] = template
-    return template
+def get_html(**variables):
+    # pylint: disable=no-member
+    scripts = "\n".join(
+        script.render(**variables) for script in _SCRIPT_TEMPLATES)
+    return _HTML_TEMPLATE.render(scripts=scripts, **variables)

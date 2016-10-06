@@ -5,10 +5,12 @@ Created on 5 Oct 2016
 '''
 
 import os
+import random
 
 from jinja2 import Environment, PackageLoader
 
 import departures
+from departures.model.conf import CONF
 
 
 _ENVIRONMENT = Environment(
@@ -25,8 +27,11 @@ _SCRIPT_TEMPLATES = [
 ]
 
 
-def get_html(**variables):
+def get_html():
     # pylint: disable=no-member
     scripts = "\n".join(
-        script.render(**variables) for script in _SCRIPT_TEMPLATES)
-    return _HTML_TEMPLATE.render(scripts=scripts, **variables)
+        script.render() for script in _SCRIPT_TEMPLATES)
+
+    gmak = random.choice(CONF['google']['api-keys'])
+
+    return _HTML_TEMPLATE.render(scripts=scripts, gmak=gmak)

@@ -9,7 +9,7 @@ import logging
 from flask import Flask, request, jsonify
 import six
 
-from departures.control import REST_API
+from departures.control.api import REST_API
 from departures.view import get_html
 import functools
 

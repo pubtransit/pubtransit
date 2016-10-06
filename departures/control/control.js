@@ -11,11 +11,13 @@ function refreshLocation() {
     }
 }
 
-function updateLocation(lat, lon) {
-    if (setLocation(lat, lon)) {
+function updateLocation(lat, lng) {
+    if (setLocation(lat, lng)) {
         debug("Set user location: " + JSON.stringify(getLocation()));
         showLocation()
         refreshStops();
+    } else {
+        debug("Same location.");
     }
 }
 

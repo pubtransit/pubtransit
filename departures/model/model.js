@@ -1,16 +1,16 @@
 var model = {
     location: {
         lat: 53.349721,
-        lon: -6.260192
+        lng: -6.260192
     },
     stops: [],
 
 }
 
-function setLocation(lat, lon) {
-    newLoc = {lat: lat, lon: lon}
+function setLocation(lat, lng) {
+    newLoc = {lat: lat, lng: lng}
     oldLoc = model.location
-    if (newLoc.lat == oldLoc.lat && newLoc.lon == oldLoc.lon) {
+    if (newLoc.lat == oldLoc.lat && newLoc.lng == oldLoc.lng) {
         return false;
     } else {
         model.location = newLoc;

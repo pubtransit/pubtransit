@@ -3,28 +3,59 @@
 
 <head>
     <title>Departures</title>
+    <meta name="viewport" content="initial-scale=1.0">
+    <meta charset="utf-8">
+    <style>
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #map {
+        height: 90%;
+      }
+    </style>
 </head>
 
 <body>
     <div id="map"></div>
-    <div id="loc"></div>
+    <table>
+        <tr>
+            <td id="loc"></td>
+            <td><button onclick="refreshLocation()">Center</button></td>
+        </tr>
+    </table>
 </body>
 
-<script type="text/javascript">
+<script type="text/javascript" id="scripts">
 
 {{scripts}}
 
 view = {
     loc: document.getElementById("loc"),
+    map: null
 };
 
 function showLocation() {
     loc = getLocation();
-    view.loc.innerHTML = "lat: " + loc.lat + ", lon: " + loc.lon;
+    view.loc.innerHTML = "lat: " + loc.lat + ", lng: " + loc.lng;
+    if (view.map) {
+        view.map.setCenter(loc)
+    }
+}
+
+function initMap() {
+    view.map = new google.maps.Map(
+        document.getElementById('map'),
+        {center: getLocation(), zoom: 8});
 }
 
 refreshLocation();
 
+</script>
+
+<script async defer
+    src="https://maps.googleapis.com/maps/api/js?key={{ gmak }}&callback=initMap">
 </script>
 
 </html>

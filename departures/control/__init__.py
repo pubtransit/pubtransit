@@ -1,15 +1,5 @@
-import logging
+'''
+Created on 6 Oct 2016
 
-
-LOG = logging.getLogger()
-
-REST_API = []
-
-
-def rest_function(func):
-    REST_API.append(func)
-
-
-@rest_function
-def get_stops(lat, lon):  # pylint: disable=unused-argument
-    return []
+@author: fressi
+'''

@@ -20,8 +20,8 @@ _HTML_TEMPLATE = _get_template("view/view.html")
 
 _SCRIPT_TEMPLATES = [
     _get_template("commons/logging.js"),
+    _get_template("model/model.js"),
     _get_template("control/control.js"),
-    _get_template("view/view.js"),
 ]
 
 

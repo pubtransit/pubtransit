@@ -11,5 +11,5 @@ def rest_function(func):
 
 
 @rest_function
-def get_stops(longitude, latitude):  # pylint: disable=unused-argument
+def get_stops(lat, lon):  # pylint: disable=unused-argument
     return []

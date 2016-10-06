@@ -1,47 +1,50 @@
-var model = {
-    location: {
-        latitude: 53.349721,
-        longitude: -6.260192
-    },
-    stops: [],
-}
-
-function getLocation() {
+function refreshLocation() {
     debug("Get user location...");
     if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(setLocation, error);
+        navigator.geolocation.getCurrentPosition(
+            function (loc) {
+                updateLocation(loc.coords.latitude, loc.coords.longitude)
+            },
+            error);
     } else {
         error("Geolocation is not supported by your browser.");
-        setLocation(null)
     }
 }
 
-function setLocation(location) {
-    if (location) {
-        model.location = {
-            longitude: location.coords.longitude,
-            latitude: location.coords.latitude
-        }
+function updateLocation(lat, lon) {
+    if (setLocation(lat, lon)) {
+        debug("Set user location: " + JSON.stringify(getLocation()));
+        showLocation()
+        refreshStops();
     }
-    debug("Set user location: " + JSON.stringify(model.location));
-    getStops(model.location);
 }
 
-function getStops(location) {
-    debug("Get nearest bus stops near (" +
-            JSON.stringify(location.latitude) + ", " +
-            JSON.stringify(location.longitude) + ")...");
+function refreshStops() {
+    loc = getLocation();
+    debug("Get nearest bus stops near " + JSON.stringify(loc) + "...");
+    performRequest("POST", "get_stops", loc, updateStops);
+}
+
+function updateStops(stops) {
+    debug("Set bus stops: " + JSON.stringify(stops));
+    setStops(stops);
+}
+
+function performRequest(method, path, data, listener_function) {
+    debug("Perform request: " +
+          JSON.stringify([method, path, data]));
 
     var request = new XMLHttpRequest();
-    request.open('POST', "get_stops");
+    request.open(method, path);
     request.setRequestHeader('Content-Type', 'application/json');
-    request.addEventListener('load',  function () {
-        setBusStops(JSON.parse(request.responseText));
-    });
-    request.send(JSON.stringify(location));
-}
 
-function setBusStops(stops) {
-    debug("Set bus stops: " + JSON.stringify(stops));
-    model.stops = stops
+    function onLoad() {
+        rensponse = JSON.parse(request.responseText)
+        debug("got rensponse: " +
+              JSON.stringify([method, path, data, rensponse]));
+        listener_function(rensponse);
+    }
+
+    request.addEventListener('load', onLoad);
+    request.send(JSON.stringify(data));
 }

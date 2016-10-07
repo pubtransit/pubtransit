@@ -51,11 +51,16 @@ function initMap() {
         {center: getLocation(), zoom: 16});
 }
 
-function dropStopMarkers() {
-    clearStopMarkers();
-    stops = getStops()
-    for (var i = 0; i < stops.length; i++) {
-        addStopMarkerWithTimeout(stops[i], i, i * 200);
+function dropStopMarkers(page) {
+    if (page == 0) {
+        clearStopMarkers();
+    }
+    stops = getStops()[page]
+    if (stops.length > 0) {
+        delay = 2000 / stops.length
+        for (var i = 0; i < stops.length; i++) {
+            addStopMarkerWithTimeout(stops[i], i, i * delay);
+        }
     }
 }
 

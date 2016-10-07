@@ -24,13 +24,29 @@ function updateLocation(lat, lng) {
 function refreshStops() {
     loc = getLocation();
     debug("Get nearest bus stops near " + JSON.stringify(loc) + "...");
-    performRequest("POST", "get_stops", loc, updateStops);
+    end_poit = "/api/v1/stops?lon=" + loc.lng + "&lat=" + loc.lat + "&r=10000"
+    performRequest("GET", end_poit, null, updateStops);
 }
 
-function updateStops(stops) {
-    debug("Set bus stops: " + JSON.stringify(stops));
-    setStops(stops);
-    dropStopMarkers();
+function updateStops(rensponse) {
+    stops = []
+
+    for (var i = 0; i < rensponse.stops.length; i++) {
+        lonLat = rensponse.stops[i].geometry.coordinates
+        stops.push({lat: lonLat[1], lng: lonLat[0]})
+    }
+
+    if (rensponse.meta.offset == 0) {
+        debug("Clear bus stops.");
+        clearStops()
+    }
+
+    debug("Push bus stops:\n" + JSON.stringify(stops));
+    dropStopMarkers(pushStops(stops));
+    next_end_point = rensponse.meta.next
+    if (next_end_point) {
+        performFullRequest("GET", next_end_point, null, updateStops);
+    }
 }
 
 function refreshBuses(stopIndex) {
@@ -48,7 +64,12 @@ function updateBuses(buses) {
     showBusesWindow();
 }
 
-function performRequest(method, path, data, listener_function) {
+function performRequest(method, end_point, data, listener_function) {
+    path = getTransitUrl(end_point)
+    performFullRequest(method, path, data, listener_function)
+}
+
+function performFullRequest(method, path, data, listener_function) {
     debug("Perform request: " +
           JSON.stringify([method, path, data]));
 

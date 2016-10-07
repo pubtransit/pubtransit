@@ -1,0 +1,10 @@
+google:
+  api-keys:
+    - AIzaSyDwigDJTs6z4mYFvL8EqvEIecO5jNGq-a4
+
+transit:
+  - url: https://transit.land
+    name: test
+    location:
+      lng: null
+      lat: null

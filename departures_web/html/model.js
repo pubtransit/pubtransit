@@ -6,6 +6,7 @@ var model = {
     stops: [],
     currentStop: -1,
     buses: [],
+    transit: {{ transit }},
 }
 
 function setLocation(lat, lng) {
@@ -23,8 +24,14 @@ function getLocation() {
     return model.location;
 }
 
-function setStops(stops) {
-    model.stops = stops
+function clearStops() {
+    model.stops = []
+}
+
+function pushStops(stops) {
+    page = model.stops.length
+    model.stops.push(stops)
+    return page
 }
 
 function getStops() {
@@ -54,4 +61,8 @@ function setBuses(buses) {
 
 function getBuses() {
     return model.buses
+}
+
+function getTransitUrl(end_point) {
+    return model.transit[0].url + '/' + end_point
 }

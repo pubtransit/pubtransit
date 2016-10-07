@@ -4,6 +4,6 @@ Created on 6 Oct 2016
 @author: fressi
 '''
 
-from departures.app import main
+from departures.app import DeparturesApplication
 
-main()
+DeparturesApplication.main()

@@ -7,31 +7,23 @@ Created on 5 Oct 2016
 import os
 import random
 
-from jinja2 import Environment, PackageLoader
-
 import departures
-from departures.model.conf import CONF
 
 
-_ENVIRONMENT = Environment(
-    loader=PackageLoader(package_name=departures.__name__, package_path=''))
-
-_get_template = _ENVIRONMENT.get_template
-
-_HTML_TEMPLATE = _get_template("view/view.html")
+_HTML_TEMPLATE = "view/view.html"
 
 _SCRIPT_TEMPLATES = [
-    _get_template("commons/logging.js"),
-    _get_template("model/model.js"),
-    _get_template("control/control.js"),
+    "commons/logging.js",
+    "model/model.js",
+    "control/control.js",
 ]
 
 
-def get_html():
+def get_html(model):
     # pylint: disable=no-member
     scripts = "\n".join(
-        script.render() for script in _SCRIPT_TEMPLATES)
+        model.get_text_file(script) for script in _SCRIPT_TEMPLATES)
 
-    gmak = random.choice(CONF['google']['api-keys'])
+    gmak = random.choice(model.google_api_keys)
 
-    return _HTML_TEMPLATE.render(scripts=scripts, gmak=gmak)
+    return model.get_text_file(_HTML_TEMPLATE, scripts=scripts, gmak=gmak)

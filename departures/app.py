@@ -9,41 +9,62 @@ import logging
 from flask import Flask, request, jsonify
 import six
 
-from departures.control.api import REST_API
 from departures.view import get_html
+from departures.model.model import Model
+from departures.control.api import REST_API
+
 import functools
 
 
 LOG = logging.getLogger()
 
 
-def main():
-    logging.basicConfig(level=logging.DEBUG)
-    app = Flask(__name__)
+class DeparturesApplication(object):
 
-    # add the main HTML file with embedded javascripts
-    app.add_url_rule('/', view_func=get_html, methods=['GET'])
+    @classmethod
+    def main(cls):
+        logging.basicConfig(level=logging.DEBUG)
 
-    # add rest API
-    for control_function in REST_API:
-        _add_control_function(app, control_function)
+        model = Model.from_yaml('etc/departures.yml')
+        application = cls(model)
+        application.run()
 
-    app.run()
+    def __init__(self, model):
+        self._model = model
+        self._flask_app = Flask(__name__)
 
+        # add the main HTML file with embedded javascripts
+        self._add_view_function(view_function=get_html, route='/')
 
-def _add_control_function(app, control_function):
+        # add rest API
+        for control_function in REST_API:
+            self._add_control_function(control_function)
 
-    @functools.wraps(control_function)
-    def function_wrapper():  # pylint: disable=unused-variable
-        parameters = request.json
-        parameters_text = ", ".join(
-            "{}={}".format(k,v) for k, v in six.iteritems(parameters))
-        LOG.debug(
-            'process request: %s(%s)', control_function.__name__,
-            parameters_text)
-        return jsonify(control_function(**parameters))
+    def run(self):
+        self._flask_app.run()
 
-    app.add_url_rule(
-        "/" + control_function.__name__,
-        view_func=function_wrapper, methods=['POST'])
+    def _add_view_function(self, view_function, route=None):
 
+        @functools.wraps(view_function)
+        def function_wrapper():  # pylint: disable=unused-variable
+            return view_function(self._model)
+
+        self._flask_app.add_url_rule(
+            route or '/view/' + view_function.__name__,
+            view_func=function_wrapper, methods=['GET'])
+
+    def _add_control_function(self, control_function):
+
+        @functools.wraps(control_function)
+        def function_wrapper():  # pylint: disable=unused-variable
+            parameters = request.json
+            parameters_text = ", ".join(
+                "{}={}".format(k,v) for k, v in six.iteritems(parameters))
+            LOG.debug(
+                'process request: %s(%s)', control_function.__name__,
+                parameters_text)
+            return jsonify(control_function(self._model, **parameters))
+
+        self._flask_app.add_url_rule(
+            "/" + control_function.__name__,
+            view_func=function_wrapper, methods=['POST'])

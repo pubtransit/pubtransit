@@ -89,3 +89,4 @@ ENV/
 .ropeproject
 /user.yaml
 /user.yml
+/conf.yml

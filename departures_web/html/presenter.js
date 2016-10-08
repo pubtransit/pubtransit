@@ -81,13 +81,14 @@ Presenter.prototype.receiveStops = function(stops) {
         this.model.pushStop(stop);
         this.view.dropStopMarker(stoId);
     }
-    this.view.updateCurrentStop();
 }
 
 Presenter.prototype.setCurrentStop = function(stopId) {
     if(this.model.setCurrentStop(stopId)) {
-        this.requestBuses();
-        this.view.updateCurrentStop();
+        if(stopId) {
+            this.requestBuses();
+            this.view.updateCurrentStop();
+        }
     }
 }
 

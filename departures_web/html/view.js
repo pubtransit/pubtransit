@@ -7,6 +7,7 @@ function View() {
     this.latitude = document.getElementById('latitude');
     this.longitude = document.getElementById('longitude');
     this.radius = document.getElementById('radius');
+    this.busWindow = null;
 };
 
 View.prototype.centerCurrentPosition = function () {
@@ -54,6 +55,11 @@ View.prototype.initMap = function() {
         }
         self.presenter.setRadius(radius);
     });
+
+    this.busWindow = new google.maps.InfoWindow();
+    this.busWindow.addListener('closeclick', function() {
+        self.presenter.setCurrentStop(null)
+    });
 }
 
 View.prototype.dropStopMarker = function(stopId) {
@@ -78,44 +84,43 @@ View.prototype.dropStopMarker = function(stopId) {
 }
 
 View.prototype.updateCurrentStop = function() {
+    var currentStop = this.model.getCurrentStop();
     var win = this.busWindow;
-    if(!win) {
-        this.busWindow = win = new google.maps.InfoWindow();
-    }
-
-    var busInfos = [
-        "<h3>"+ this.model.getCurrentStop().name + "</h3>",
-        "<table>",
-        "<tr>" +
-            "<td><h4>Route</h4></td>" +
-            "<td><h4>Destination</h4></td>" +
-            "<td><h4>Time</h4></td>" +
-        "<tr>",
-    ];
-    for (var busId in this.model.buses) {
-        var bus = this.model.buses[busId];
-        var route = bus.routeId.split('-')[2];
-        if (!route) {
-            route = bus.routeId;
+    if(currentStop && win) {
+        var busInfos = [
+            "<h3>"+ currentStop.name + "</h3>",
+            "<table>",
+            "<tr>" +
+                "<td><h4>Route</h4></td>" +
+                "<td><h4>Destination</h4></td>" +
+                "<td><h4>Time</h4></td>" +
+            "<tr>",
+        ];
+        for (var busId in this.model.buses) {
+            var bus = this.model.buses[busId];
+            var route = bus.routeId.split('-')[2];
+            if (!route) {
+                route = bus.routeId;
+            }
+            var destinationStop = this.model.stops[bus.destinationId];
+            if (destinationStop) {
+                var destinationName = destinationStop.name;
+            } else {
+                var destinationName = bus.destinationId;
+            }
+            var time = bus.time.join(':');
+            var row = "<tr>" +
+                "<td><h5>" + route + "</h5></td>" +
+                "<td>" + destinationName + "</td>" +
+                "<td>" + time + "</td>" +
+            "<tr>";
+            busInfos.push(row);
         }
-        var destinationStop = this.model.stops[bus.destinationId];
-        if (destinationStop) {
-            var destinationName = destinationStop.name;
-        } else {
-            var destinationName = bus.destinationId;
-        }
-        var time = bus.time.join(':');
-        var row = "<tr>" +
-            "<td><h5>" + route + "</h5></td>" +
-            "<td>" + destinationName + "</td>" +
-            "<td>" + time + "</td>" +
-        "<tr>";
-        busInfos.push(row);
+        busInfos.push('</table>');
+        win.setContent(busInfos.join(''));
+        win.setPosition(currentStop);
+        win.open(this.map);
     }
-    busInfos.push('</table>');
-    win.setContent(busInfos.join(''));
-    win.setPosition(this.model.getCurrentStop());
-    win.open(this.map);
 }
 
 function closeBusesWindow() {

@@ -1,68 +1,43 @@
-var model = {
-    location: {
-        lat: 53.349721,
-        lng: -6.260192
-    },
-    stops: [],
-    currentStop: -1,
-    buses: [],
-    transit: {{ transit }},
+
+function Model() {
+    this.position = {lat: 53.349721, lng: -6.260192};
+    this.radius = 1000;
+    this.stops = {};
+    this.currentStop = null;
+    this.buses = [];
+    this.transit = {{ transit }};
 }
 
-function setLocation(lat, lng) {
-    newLoc = {lat: lat, lng: lng}
-    oldLoc = model.location
-    if (newLoc.lat == oldLoc.lat && newLoc.lng == oldLoc.lng) {
+Model.prototype.setPosition = function(position) {
+    if (this.position.lat == position.lat &&
+        this.position.lng == position.lng) {
         return false;
     } else {
-        model.location = newLoc;
+        this.position = position;
         return true
     }
 }
 
-function getLocation() {
-    return model.location;
-}
-
-function clearStops() {
-    model.stops = []
-}
-
-function pushStops(stops) {
-    page = model.stops.length
-    model.stops.push(stops)
-    return page
-}
-
-function getStops() {
-    return model.stops
-}
-
-function setCurrentStop(stopIndex) {
-    if (stopIndex != model.currentStop) {
-        model.currentStop = stopIndex;
+Model.prototype.setRadius = function(radius) {
+    if (this.radius == radius) {
+        return false;
+    } else {
+        this.radius = radius;
         return true
     }
 }
 
-function getCurrentStop() {
-    return model.currentStop
+Model.prototype.pushStop = function(stop) {
+    this.stops[stop.stopId] = stop;
 }
 
-function getCurrentStopPosition() {
-    if (model.currentStop >= 0) {
-        return model.stops[model.currentStop]
+Model.prototype.setCurrentStop = function(stopId) {
+    if (stopId != this.currentStop) {
+        this.currentStop = stopId;
+        return true
     }
 }
 
-function setBuses(buses) {
-    model.buses = buses
-}
-
-function getBuses() {
-    return model.buses
-}
-
-function getTransitUrl(end_point) {
-    return model.transit[0].url + '/' + end_point
+Model.prototype.getCurrentStop = function() {
+    return this.stops[this.currentStop];
 }

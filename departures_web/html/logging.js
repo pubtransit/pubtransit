@@ -1,15 +1,26 @@
-function debug(message) {
-    console.log("DEBUG   | " + message);
-}
+var log = {
 
-function info(message) {
-    console.log("INFO    | " + message);
-}
+    debug: function () {
+        this.emit(" DEBUG ", arguments);
+    },
 
-function warning(message) {
-    console.log("WARNING | " + message);
-}
+    info: function () {
+        this.emit(" INFO  ", arguments);
+    },
 
-function error(message) {
-    console.log("ERROR   | " + message);
-}
+    warning: function() {
+        this.emit("WARNING", arguments);
+    },
+
+    error: function() {
+        this.emit(" ERROR ", arguments);
+    },
+
+    emit: function(level, args) {
+        stringified = [];
+        for(var i in args) {
+            stringified.push(JSON.stringify(args[i]))
+        }
+        console.log(level + " | " + stringified.join(" "))
+    }
+};

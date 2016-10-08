@@ -19,102 +19,21 @@
 
 <body>
     <div id="map"></div>
-    <table>
-        <tr>
-            <td id="loc"></td>
-            <td><button onclick="refreshLocation()">Center</button></td>
-        </tr>
-    </table>
+    <button onclick="view.centerCurrentPosition()">Center</button>
 </body>
 
-<script type="text/javascript" id="scripts">
+<script type="text/javascript">
 
 {{scripts}}
 
-view = {
-    loc: document.getElementById("loc"),
-    map: null,
-    stopMarkers: []
-};
+var view = new View();
 
-function showLocation() {
-    loc = getLocation();
-    view.loc.innerHTML = "lat: " + loc.lat + ", lng: " + loc.lng;
-    if (view.map) {
-        view.map.setCenter(loc)
-    }
-}
-
-function initMap() {
-    view.map = new google.maps.Map(
-        document.getElementById('map'),
-        {center: getLocation(), zoom: 16});
-}
-
-function dropStopMarkers(page) {
-    if (page == 0) {
-        clearStopMarkers();
-    }
-    stops = getStops()[page]
-    if (stops.length > 0) {
-        delay = 2000 / stops.length
-        for (var i = 0; i < stops.length; i++) {
-            addStopMarkerWithTimeout(stops[i], i, i * delay);
-        }
-    }
-}
-
-function addStopMarkerWithTimeout(stop, stopIndex, timeout) {
-
-    function dropMarker() {
-        marker = new google.maps.Marker({
-            position: stop, map: view.map,
-            animation: google.maps.Animation.DROP});
-
-        marker.addListener('click', function() {refreshBuses(stopIndex);});
-
-        view.stopMarkers.push(marker);
-    }
-    window.setTimeout(dropMarker, timeout);
-}
-
-function clearStopMarkers() {
-    markers = view.stopMarkers
-    for (var i = 0; i < markers.length; i++) {
-        markers[i].setMap(null);
-    }
-    view.stopMarkers = [];
-}
-
-function showBusesWindow() {
-    closeBusesWindow();
-    busesInfo = [];
-    buses = getBuses()
-    for (var i = 0; i < buses.length; i++) {
-        bus = buses[i]
-        busesInfo.push(JSON.stringify(bus))
-    }
-
-    view.busesWindow = win = new google.maps.InfoWindow();
-    win.setContent(busesInfo.join('<br>'));
-    win.setPosition(getCurrentStopPosition());
-    win.open(view.map);
-}
-
-function closeBusesWindow() {
-    win = view.busesWindow;
-    if (win) {
-        win.close();
-        view.busesWindow = null;
-    }
-}
-
-refreshLocation();
+view.centerCurrentPosition();
 
 </script>
 
 <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key={{ gmak }}&callback=initMap">
+    src="https://maps.googleapis.com/maps/api/js?key={{ gmak }}&callback=view.initMap">
 </script>
 
 </html>

@@ -4,6 +4,7 @@ Created on 5 Oct 2016
 @author: fressi
 '''
 
+import argparse
 import logging
 import random
 
@@ -22,12 +23,8 @@ class Application(object):
     SCRIPT_TEMPLATES = ["html/*.js"]
 
     @classmethod
-    def main(cls):
-        logging.basicConfig(level=logging.DEBUG)
-
-        model = Model.from_yaml('etc/departures.yml')
-        application = cls(model)
-        application.run()
+    def from_yaml(cls, yaml_name='etc/departures.yml'):
+        return cls(Model.from_yaml(yaml_name))
 
     def run(self):
         self._flask_app.run()

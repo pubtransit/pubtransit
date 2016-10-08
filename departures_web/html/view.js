@@ -108,7 +108,16 @@ View.prototype.updateCurrentStop = function() {
             } else {
                 var destinationName = bus.destinationId;
             }
-            var time = bus.time.join(':');
+            var remainingMinutes = Math.ceil(bus.deltaTime / (1000 * 60));
+            if (remainingMinutes < 60.) {
+                var time = [remainingMinutes, "min."].join(" ")
+            } else {
+                var time = [
+                    bus.time.getHours(),
+                    bus.time.getSeconds(),
+                    bus.time.getMinutes()
+                ].join(':');
+            }
             var row = "<tr>" +
                 "<td><h5>" + route + "</h5></td>" +
                 "<td>" + destinationName + "</td>" +

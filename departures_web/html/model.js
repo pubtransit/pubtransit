@@ -59,15 +59,7 @@ Model.prototype.pushBus = function(bus) {
 Model.prototype.sortBuses = function() {
     this.buses.sort(
         function(bus1, bus2) {
-            var time1 = bus1.time;
-            var time2 = bus2.time;
-            for (var i = 0; i < 3; i++) {
-                var delta = time1[i] - time2[i];
-                if(delta != 0) {
-                    return delta;
-                }
-            }
-            return 0;
+            return bus1.time - bus2.time;
         }
     );
 }

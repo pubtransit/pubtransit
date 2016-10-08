@@ -103,15 +103,30 @@ Presenter.prototype.requestBuses = function(stopId) {
 
 Presenter.prototype.receiveBuses = function(buses) {
     for (var i in buses) {
-        var time = buses[i].origin_arrival_time.split(':')
-        var bus = {
-            routeId: buses[i].route_onestop_id,
-            destinationId: buses[i].destination_onestop_id,
-            time: [parseInt(time[0]), parseInt(time[1]), parseInt(time[2])]
-        };
-        log.debug("Update current buses:", bus);
-        this.model.pushBus(bus);
-        this.model.pushRequiredStop(bus.destinationId);
+        var now = new Date();
+        var timeParts = buses[i].origin_arrival_time.split(':');
+        var time = new Date();
+        time.setHours(timeParts[0]);
+        time.setMinutes(timeParts[1]);
+        time.setSeconds(timeParts[2]);
+        var deltaTime = time - now;
+        if (deltaTime < 0) {
+            // increment the time by one day
+            time.setDate(time.getDate() + 1);
+            deltaTime = time - now;
+        }
+        var hasService = buses[i].service_days_of_week[time.getDay()];
+        if (hasService) {
+            var bus = {
+                routeId: buses[i].route_onestop_id,
+                destinationId: buses[i].destination_onestop_id,
+                time: time,
+                deltaTime: deltaTime,
+            };
+            log.debug("Update current buses:", bus);
+            this.model.pushBus(bus);
+            this.model.pushRequiredStop(bus.destinationId);
+        }
     }
     this.model.sortBuses();
     this.view.updateCurrentStop();

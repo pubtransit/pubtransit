@@ -19,7 +19,10 @@ Presenter.prototype.centerCurrentPosition = function() {
                     lng: position.coords.longitude
                 });
             },
-            log.error
+            function (msg) {
+                log.error("Unable to get user position:", msg);
+                self.view.centerPosition(self.model.getCenter());
+            }
         );
     } else {
         log.error("Geolocation is not supported by your browser.");

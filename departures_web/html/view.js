@@ -15,7 +15,9 @@ View.prototype.centerCurrentPosition = function () {
 }
 
 View.prototype.centerPosition = function (position) {
-    this.map.setCenter(position);
+    if (this.map) {
+        this.map.setCenter(position);
+    }
 }
 
 View.prototype.updateCenter = function () {
@@ -60,6 +62,8 @@ View.prototype.initMap = function() {
     }
     this.busWindow = new google.maps.InfoWindow();
     this.busWindow.addListener('closeclick', busWindowClosed);
+
+    view.centerCurrentPosition();
 }
 
 View.prototype.dropStopMarker = function(stopId) {

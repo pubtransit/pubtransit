@@ -1,8 +1,10 @@
 
 function Model() {
     this.bounds = {
-        sw: {lat: 56.163357, lng: 10.216666},
-        ne :{lat: 56.163357, lng: 10.216666}
+        south: 52.66449765057875,
+        north: 52.66449765057875,
+        east: -8.632234899999958,
+        west: -8.632234899999958,
     };
     this.stops = {};
     this.currentStop = null;

@@ -2,6 +2,7 @@ function TransitClient(conf) {
     this.conf = conf;
     this.stopRequest = null;
     this.busRequest = null;
+    this.routeRequres = null;
 }
 
 TransitClient.prototype.requestStops = function(
@@ -38,6 +39,42 @@ TransitClient.prototype.requestBuses = function(
     }
     return request;
 }
+
+TransitClient.prototype.requestRoutes = function(
+        stopId, receiveRoutes) {
+    var request = this.routeRequest;
+    if (request) {
+        request.stop();
+    }
+
+    this.routeRequest = request = new TransitRequest(
+        this.getUrl("/api/v1/route_stop_patterns"),
+        {stops_visited: stopId}
+    );
+    request.onRensponse = function (response) {
+        receiveRoutes(response.route_stop_patterns);
+    }
+    return request;
+}
+
+TransitClient.prototype.requestRouteStops = function(
+        routeIds, receiveStops) {
+    var request = this.stopRequest;
+    if (request) {
+        request.stop();
+    }
+
+    this.stopRequest = request = new TransitRequest(
+        this.getUrl("/api/v1/stops"), {
+            served_by: routeIds.join(',')
+        }
+    );
+    request.onRensponse = function (response) {
+        receiveStops(response.stops);
+    }
+    return request;
+}
+
 
 TransitClient.prototype.getUrl = function(endPoint) {
     return this.conf[0].url + '/' + endPoint

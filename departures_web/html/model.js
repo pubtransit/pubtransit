@@ -9,6 +9,7 @@ function Model() {
     this.buses = [];
     this.transit = {{ transit }};
     this.zoom = 15;
+    this.routes = {};
 }
 
 Model.prototype.setBounds = function(bounds) {
@@ -63,4 +64,15 @@ Model.prototype.sortBuses = function() {
             return bus1.time - bus2.time;
         }
     );
+}
+
+Model.prototype.pushRoute = function(route) {
+    var routeId = route.routeId;
+    if(route.routeId in this.routes) {
+        for(key in route) {
+            this.routes[route.routeId][key] = route[key];
+        }
+    } else {
+        this.routes[route.routeId] = route;
+    }
 }

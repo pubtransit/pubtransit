@@ -4,6 +4,7 @@ function Presenter(view, model) {
     this.view = view;
     this.transit = new TransitClient(model.transit);
     this._stopRequested = false;
+    this._updateCurrentStopRequested = false;
 }
 
 Presenter.prototype.centerCurrentPosition = function() {
@@ -46,29 +47,42 @@ Presenter.prototype.setZoom = function(zoom) {
 }
 
 Presenter.prototype.requestStops = function() {
-    this._stopRequested = false;
-
     log.debug("Get stops:", this.model.bounds);
     var self = this;
     this.transit.requestStops(
         this.model.bounds,
         function(stops) {self.receiveStops(stops)}
     ).send();
+    this._stopRequested = false;
 }
 
 Presenter.prototype.receiveStops = function(stops) {
     for (var i in stops) {
-        log.debug("Parse bus stop:", stops[i]);
-        var stoId = stops[i].onestop_id;
-        var lonLat = stops[i].geometry.coordinates;
+        var stopEntry = stops[i];
+        // log.debug("Parse bus stop:", stopEntry);
+
+        var routes = [];
+        for(j in stopEntry.routes_serving_stop) {
+            var routeEntry = stopEntry.routes_serving_stop[j];
+            route = {
+                routeId: routeEntry.route_onestop_id,
+                name: routeEntry.route_name
+            }
+            this.model.pushRoute(route);
+            routes.push(route.routeId);
+        }
+
+        var stopId = stopEntry.onestop_id;
+        var lonLat = stopEntry.geometry.coordinates;
         var stop = {
-            stopId: stoId,
+            stopId: stopId,
             lat: lonLat[1],
             lng: lonLat[0],
             name: stops[i].name,
+            routes: routes,
         };
         this.model.pushStop(stop);
-        this.view.dropStopMarker(stoId);
+        this.view.dropStopMarker(stopId);
     }
 }
 
@@ -76,7 +90,8 @@ Presenter.prototype.setCurrentStop = function(stopId) {
     if(this.model.setCurrentStop(stopId)) {
         if(stopId) {
             this.requestBuses();
-            this.view.updateCurrentStop();
+            this.requestRoutes();
+            this.updateCurrentStop();
         }
     }
 }
@@ -117,5 +132,65 @@ Presenter.prototype.receiveBuses = function(buses) {
         }
     }
     this.model.sortBuses();
-    this.view.updateCurrentStop();
+    this.updateCurrentStop();
+}
+
+Presenter.prototype.requestRoutes = function(stopId) {
+    log.debug("Get routes:", stopId);
+    var self = this;
+    this.transit.requestRoutes(
+        this.model.currentStop,
+        function(routes) {self.receiveRoutes(routes)}
+    ).send();
+}
+
+Presenter.prototype.receiveRoutes = function(routes) {
+    var routeIds = [];
+    for (var i in routes) {
+        var routeEntry = routes[i];
+        log.debug("Parse bus route:", routeEntry);
+
+        var stops = [];
+        for(i in routeEntry.stop_pattern) {
+            stops.push(routeEntry.stop_pattern[i])
+        }
+        var route = {
+            routeId: routeEntry.route_onestop_id,
+            stops: stops
+        }
+        routeIds.push(routeEntry.route_onestop_id);
+        this.model.pushRoute(route);
+    }
+    if(routeIds && routeIds.length > 0) {
+        this.requestRouteStops(routeIds);
+    }
+    this.updateCurrentStop();
+}
+
+Presenter.prototype.updateCurrentStop = function(routes) {
+    if(this.model.currentStop && !this._updateCurrentStopRequested) {
+        this._updateCurrentStopRequested = true;
+        var self = this;
+        window.setTimeout(
+            function() {
+                self._updateCurrentStopRequested = false;
+                if(self.model.currentStop) {
+                    self.view.updateCurrentStop();
+                    self.updateCurrentStop();
+                }
+            },
+            1000
+        );
+    } else {
+        this._updateCurrentStopRequested = false;
+    }
+}
+
+Presenter.prototype.requestRouteStops = function(routeIds) {
+    log.debug("Get stops for routes:", this.model.bounds);
+    var self = this;
+    this.transit.requestRouteStops(
+        routeIds,
+        function(stops) {self.receiveStops(stops)}
+    ).send();
 }

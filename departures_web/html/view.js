@@ -60,13 +60,6 @@ View.prototype.initMap = function() {
     }
     this.busWindow = new google.maps.InfoWindow();
     this.busWindow.addListener('closeclick', busWindowClosed);
-
-    self.presenter.setZoom(self.map.getZoom());
-    var bounds = this.map.getBounds().toJSON();
-    if (!isNaN(bounds.south) && !isNaN(bounds.north) &&
-        !isNaN(bounds.east) && !isNaN(bounds.west)) {
-        self.presenter.setBounds(bounds);
-    }
 }
 
 View.prototype.dropStopMarker = function(stopId) {
@@ -105,15 +98,33 @@ View.prototype.updateCurrentStop = function() {
         ];
         for (var busId in this.model.buses) {
             var bus = this.model.buses[busId];
-            var route = bus.routeId.split('-')[2];
-            if (!route) {
-                route = bus.routeId;
+            var route = this.model.routes[bus.routeId];
+            if (route) {
+                var routeName = route.name;
+                var routeStops = route.stops;
+            } else {
+                var routeName = bus.routeId.split('-')[2];
+                var routeStops = null;
             }
-            var destinationStop = this.model.stops[bus.destinationId];
+
+            if(routeStops && routeStops.length > 0) {
+                departureIndex = routeStops.indexOf(currentStop.stopId);
+                destinationIndex = routeStops.indexOf(bus.destinationId);
+                if (departureIndex > destinationIndex) {
+                    var finalDestinationId = routeStops[0];
+                } else {
+                    var finalDestinationId = routeStops[routeStops.length - 1];
+                }
+            }
+            else {
+                finalDestinationId = bus.destinationId;
+            }
+
+            var destinationStop = this.model.stops[finalDestinationId];
             if (destinationStop) {
                 var destinationName = destinationStop.name;
             } else {
-                var destinationName = bus.destinationId;
+                var destinationName = finalDestinationId.split('-')[2];
             }
             var remainingMinutes = Math.ceil(bus.deltaTime / (1000 * 60));
             if (remainingMinutes < 60.) {
@@ -126,16 +137,20 @@ View.prototype.updateCurrentStop = function() {
                 ].join(':');
             }
             var row = "<tr>" +
-                "<td><h5>" + route + "</h5></td>" +
+                "<td><h5>" + routeName + "</h5></td>" +
                 "<td>" + destinationName + "</td>" +
-                "<td>" + time + "</td>" +
+                "<td><h5>" + time + "</h5></td>" +
             "<tr>";
             busInfos.push(row);
         }
         busInfos.push('</table>');
-        win.setContent(busInfos.join(''));
-        win.setPosition(currentStop);
-        win.open(this.map);
+        var newContent = busInfos.join('');
+        var oldContent = win.getContent();
+        if (newContent != oldContent) {
+            win.setContent(newContent);
+            win.setPosition(currentStop);
+            win.open(this.map);
+        }
     }
 }
 

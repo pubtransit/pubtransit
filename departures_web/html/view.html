@@ -24,7 +24,7 @@
     <div id="map"></div>
     Latitute:  <input id="latitude"></input>
     Longitude: <input id="longitude"></input>
-    Radius:    <input id="radius"></input>
+    Zoom:    <input id="zoom"></input>
     <button onclick="view.centerCurrentPosition()">Center</button>
 </body>
 
@@ -34,8 +34,8 @@
 
 var view = new View();
 
-view.updatePosition();
-view.updateRadius();
+view.updateCenter();
+view.updateZoom();
 view.centerCurrentPosition();
 
 </script>

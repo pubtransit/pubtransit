@@ -6,7 +6,7 @@ function View() {
     this.presenter = new Presenter(this, this.model);
     this.latitude = document.getElementById('latitude');
     this.longitude = document.getElementById('longitude');
-    this.radius = document.getElementById('radius');
+    this.zoom = document.getElementById('zoom');
     this.busWindow = null;
 };
 
@@ -14,52 +14,59 @@ View.prototype.centerCurrentPosition = function () {
     this.presenter.centerCurrentPosition();
 }
 
-View.prototype.updatePosition = function () {
-    if (this.map) {
-        this.map.setCenter(this.model.position);
-    }
-    this.latitude.value = this.model.position.lat;
-    this.longitude.value = this.model.position.lng;
+View.prototype.centerPosition = function (position) {
+    this.map.setCenter(position);
 }
 
-View.prototype.updateRadius = function () {
-    this.radius.value = this.model.radius;
-    if (radius > 1000.) {
-        this.radius["border-color"] = "red";
-    } else {
-        this.radius["border-color"] = "black";
-   }
+View.prototype.updateCenter = function () {
+    if (this.map) {
+        var center = this.model.getCenter();
+        this.latitude.value = center.lat;
+        this.longitude.value = center.lng;
+    }
+}
+
+View.prototype.updateZoom = function () {
+    if (this.map) {
+        this.zoom.value = this.model.zoom;
+    }
 }
 
 View.prototype.initMap = function() {
     this.map = new google.maps.Map(
         document.getElementById('map'),
-        {center: this.model.position, zoom: 16}
+        {bounds: this.model.bounds, zoom: 16}
     );
 
     var self = this;
-    this.map.addListener('center_changed', function() {
-        var position = self.map.getCenter().toJSON();
-        self.presenter.setPosition(position);
-    });
-    this.map.addListener('zoom_changed', function() {
-        var zoom = self.map.getZoom() - 15;
-        var radius = 1000.;
-        while (zoom > 0) {
-            zoom--;
-            radius *= 0.5
-        }
-        while (zoom < 0) {
-            zoom++;
-            radius *= 2.
-        }
-        self.presenter.setRadius(radius);
-    });
 
-    this.busWindow = new google.maps.InfoWindow();
-    this.busWindow.addListener('closeclick', function() {
+    function boundsChanged() {
+        var bounds = self.map.getBounds().toJSON();
+        if (!isNaN(bounds.south) && !isNaN(bounds.north) &&
+            !isNaN(bounds.east) && !isNaN(bounds.west)) {
+            self.presenter.setBounds(bounds);
+        }
+    }
+    this.map.addListener('bounds_changed', boundsChanged);
+
+    function zoomChanged() {
+        self.presenter.setZoom(self.map.getZoom());
+    }
+    zoomChanged();
+    this.map.addListener('zoom_changed', zoomChanged);
+
+    var busWindowClosed = function() {
         self.presenter.setCurrentStop(null)
-    });
+    }
+    this.busWindow = new google.maps.InfoWindow();
+    this.busWindow.addListener('closeclick', busWindowClosed);
+
+    self.presenter.setZoom(self.map.getZoom());
+    var bounds = this.map.getBounds().toJSON();
+    if (!isNaN(bounds.south) && !isNaN(bounds.north) &&
+        !isNaN(bounds.east) && !isNaN(bounds.west)) {
+        self.presenter.setBounds(bounds);
+    }
 }
 
 View.prototype.dropStopMarker = function(stopId) {

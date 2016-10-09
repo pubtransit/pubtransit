@@ -1,43 +1,44 @@
 
 function Model() {
-    this.position = {lat: 56.163357, lng: 10.216666};
-    this.radius = 500;
-    this.requiredStops = {};
+    this.bounds = {
+        sw: {lat: 56.163357, lng: 10.216666},
+        ne :{lat: 56.163357, lng: 10.216666}
+    };
     this.stops = {};
     this.currentStop = null;
     this.buses = [];
     this.transit = {{ transit }};
+    this.zoom = 15;
 }
 
-Model.prototype.setPosition = function(position) {
-    if (this.position.lat == position.lat &&
-        this.position.lng == position.lng) {
+Model.prototype.setBounds = function(bounds) {
+    if (
+        this.bounds.east == bounds.east &&
+        this.bounds.north == bounds.north &&
+        this.bounds.west == bounds.west &&
+        this.bounds.south == bounds.south
+    ) {
         return false;
     } else {
-        this.position = position;
+        this.bounds = bounds;
         return true
     }
 }
 
-Model.prototype.setRadius = function(radius) {
-    if (this.radius == radius) {
-        return false;
-    } else {
-        this.radius = radius;
-        return true;
+Model.prototype.getCenter = function() {
+    return {
+        lat: (this.bounds.south + this.bounds.north) * 0.5,
+        lng: (this.bounds.east + this.bounds.west) * 0.5
     }
+}
+
+Model.prototype.setZoom = function(zoom) {
+    this.zoom = zoom
 }
 
 Model.prototype.pushStop = function(stop) {
     var stopId = stop.stopId;
-    delete this.requiredStops[stopId];
     this.stops[stop.stopId] = stop;
-}
-
-Model.prototype.pushRequiredStop = function(stopId) {
-    if (!(stopId in this.stops)){
-        this.requiredStops[stopId] = true;
-    }
 }
 
 Model.prototype.setCurrentStop = function(stopId) {

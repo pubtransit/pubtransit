@@ -8,11 +8,11 @@ function Presenter(view, model) {
 
 Presenter.prototype.centerCurrentPosition = function() {
     if (navigator.geolocation) {
-        var presenter = this;
+        var self = this;
         log.debug("Get user position...");
         navigator.geolocation.getCurrentPosition(
             function (position) {
-                presenter.setPosition({
+                self.view.centerPosition({
                     lat: position.coords.latitude,
                     lng: position.coords.longitude
                 });
@@ -24,47 +24,36 @@ Presenter.prototype.centerCurrentPosition = function() {
     }
 }
 
-Presenter.prototype.setPosition = function(position) {
-    if (this.model.setPosition(position)) {
-        log.debug("Center user position:", this.model.position);
-        this.view.updatePosition();
-        if (!this._stopRequested) {
-            this._stopRequested = true;
-            self = this;
-            window.setTimeout(function() {self.requestStops()}, 500.);
+Presenter.prototype.setBounds = function(bounds) {
+    if (this.model.setBounds(bounds)) {
+        if (this.model.zoom > 13) {
+            log.debug("Set bounds:", this.model.bounds);
+            if (!this._stopRequested) {
+                this._stopRequested = true;
+                self = this;
+                window.setTimeout(function() {self.requestStops()}, 500.);
+            }
         }
+        this.view.updateCenter();
     } else {
         log.debug("Same location.");
     }
 }
 
-Presenter.prototype.setRadius = function(radius) {
-    if (this.model.setRadius(radius)) {
-        log.debug("Set user radius:", this.model.radius);
-        this.view.updateRadius();
-        if (!this._stopRequested) {
-            this._stopRequested = true;
-            self = this;
-            window.setTimeout(function() {self.requestStops()}, 500.);
-        }
-    } else {
-        log.debug("Same radius.");
-    }
+Presenter.prototype.setZoom = function(zoom) {
+    this.model.setZoom(zoom);
+    this.view.updateZoom(zoom);
 }
 
 Presenter.prototype.requestStops = function() {
     this._stopRequested = false;
 
-    if (this.model.radius <= 1000.){
-        log.debug("Get stops:", this.model.position, this.model.radius);
-        var self = this;
-        this.transit.requestStops(
-            this.model.position, this.model.radius,
-            function(stops) {self.receiveStops(stops)}
-        ).send();
-    } else {
-        log.debug("Don't get stops for radius bigger than 1Km.");
-    }
+    log.debug("Get stops:", this.model.bounds);
+    var self = this;
+    this.transit.requestStops(
+        this.model.bounds,
+        function(stops) {self.receiveStops(stops)}
+    ).send();
 }
 
 Presenter.prototype.receiveStops = function(stops) {
@@ -125,7 +114,6 @@ Presenter.prototype.receiveBuses = function(buses) {
             };
             log.debug("Update current buses:", bus);
             this.model.pushBus(bus);
-            this.model.pushRequiredStop(bus.destinationId);
         }
     }
     this.model.sortBuses();

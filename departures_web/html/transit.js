@@ -5,14 +5,16 @@ function TransitClient(conf) {
 }
 
 TransitClient.prototype.requestStops = function(
-        position, radius, receiveStops) {
+        bounds, receiveStops) {
     var request = this.stopRequest;
     if (request) {
         request.stop();
     }
     this.stopRequest = request = new TransitRequest(
-        this.getUrl("/api/v1/stops"),
-        {lon: position.lng, lat: position.lat, r: radius}
+        this.getUrl("/api/v1/stops"), {
+            bbox: [bounds.west, bounds.south,
+                   bounds.east, bounds.north].join(',')
+        }
     );
     request.onRensponse = function (response) {
         receiveStops(response.stops);

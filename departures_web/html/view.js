@@ -63,23 +63,25 @@ View.prototype.initMap = function() {
 }
 
 View.prototype.dropStopMarker = function(stopId) {
-    if (!this.stopMarkers[stopId]) {
+    var marker = this.stopMarkers[stopId]
+    if (!marker) {
+        log.debug("Drop new stop marker:", stopId);
+        this.stopMarkers[stopId] = marker = new google.maps.Marker({
+            position: this.model.stops[stopId], map: view.map,
+            animation: google.maps.Animation.DROP
+        });
         var self = this;
-        function dropMarker() {
-            log.debug("Drop new stop marker:", stopId);
-            marker = self.stopMarkers[stopId]
-            if (!marker){
-                marker = new google.maps.Marker({
-                    position: self.model.stops[stopId], map: view.map,
-                    animation: google.maps.Animation.DROP});
-                marker.addListener(
-                    'click', function() {
-                        self.presenter.setCurrentStop(stopId);
-                    });
-                view.stopMarkers[stopId] = marker;
-            }
-        }
-        window.setTimeout(dropMarker, Math.random() * 1000.);
+        marker.addListener(
+            'click', function() {self.presenter.setCurrentStop(stopId);}
+        );
+    }
+}
+
+View.prototype.removeMarkers = function() {
+    oldMarkers = this.stopMarkers;
+    this.stopMarkers = {};
+    for(i in oldMarkers){
+        oldMarkers[i].setMap(null);
     }
 }
 

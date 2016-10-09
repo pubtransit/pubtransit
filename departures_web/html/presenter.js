@@ -5,6 +5,7 @@ function Presenter(view, model) {
     this.transit = new TransitClient(model.transit);
     this._stopRequested = false;
     this._updateCurrentStopRequested = false;
+    this.MIN_ZOOM = 15;
 }
 
 Presenter.prototype.centerCurrentPosition = function() {
@@ -27,7 +28,7 @@ Presenter.prototype.centerCurrentPosition = function() {
 
 Presenter.prototype.setBounds = function(bounds) {
     if (this.model.setBounds(bounds)) {
-        if (this.model.zoom > 13) {
+        if (this.model.zoom >= this.MIN_ZOOM) {
             log.debug("Set bounds:", this.model.bounds);
             if (!this._stopRequested) {
                 this._stopRequested = true;
@@ -42,6 +43,10 @@ Presenter.prototype.setBounds = function(bounds) {
 }
 
 Presenter.prototype.setZoom = function(zoom) {
+    if (zoom < this.MIN_ZOOM) {
+        this.view.removeMarkers()
+    }
+
     this.model.setZoom(zoom);
     this.view.updateZoom(zoom);
 }
@@ -82,8 +87,18 @@ Presenter.prototype.receiveStops = function(stops) {
             routes: routes,
         };
         this.model.pushStop(stop);
-        this.view.dropStopMarker(stopId);
+        this.dropStopMarker(stopId);
     }
+}
+
+Presenter.prototype.dropStopMarker = function(stopId) {
+    var self = this;
+    function dropMarker() {
+        if(self.model.zoom >= self.MIN_ZOOM){
+            self.view.dropStopMarker(stopId);
+        }
+    }
+    window.setTimeout(dropMarker, Math.random() * 1000.);
 }
 
 Presenter.prototype.setCurrentStop = function(stopId) {

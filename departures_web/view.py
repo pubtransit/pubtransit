@@ -4,7 +4,6 @@ Created on 5 Oct 2016
 @author: fressi
 '''
 
-import argparse
 import logging
 import random
 

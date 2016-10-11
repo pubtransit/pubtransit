@@ -90,3 +90,5 @@ ENV/
 /user.yaml
 /user.yml
 /conf.yml
+/feeds/
+/.DS_Store

@@ -1,0 +1,54 @@
+- name: Launch OpenStack
+  hosts: all
+  remote_user: ubuntu
+  vars:
+    transit_dir: ~/transit
+  tasks:
+
+  - name: Install some basic apt stuff
+    become: true
+    become_user: root
+    retries: 3
+    apt: pkg="{{item}}" state=installed
+         update_cache=yes cache_valid_time=3600
+    with_items:
+      - git
+      - build-essential
+      - libxslt1-dev
+      - python-setuptools
+      - python-dev
+
+  - name: Ensure last pip is installed
+    become: true
+    become_user: root
+    retries: 3
+    easy_install:
+      name: pip
+      state: latest
+
+  - name: Ensure setuptools, pip, tox... are installed at the latest version
+    become: true
+    become_user: root
+    action: pip name="{{item}}" state=latest
+    retries: 3
+    with_items:
+      - setuptools
+      - tox
+
+  - name: Fix proxy environment
+    become: true
+    become_user: root
+    script: provision/get_proxy_env.py /etc/profile.d/proxy.sh
+
+  - name: Deploy transit source files
+    synchronize: src=. dest=/home/ubuntu
+
+  - name: Intall transit python requirements
+    become: true
+    become_user: root
+    retries: 3
+    pip: requirements=/home/ubuntu/transit/requirements.txt
+
+
+  - name: Build feeds and html files
+    make: chdir=/home/ubuntu/transit target=all

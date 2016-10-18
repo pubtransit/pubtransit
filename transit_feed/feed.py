@@ -9,6 +9,7 @@ import collections
 import csv
 import logging
 import os
+import re
 import sys
 import zipfile
 import zlib
@@ -19,7 +20,10 @@ import numpy
 import pandas
 import yaml
 
-import departures_feed
+import transit_feed
+
+
+# pylint: disable=missing-docstring,fixme
 
 
 LOG = logging.getLogger(__name__)
@@ -27,7 +31,7 @@ LOG = logging.getLogger(__name__)
 OUT_STREAM = sys.stdout
 
 TEMPLATE_MANAGER = jinja2.Environment(
-    loader=jinja2.PackageLoader(departures_feed.__name__, ''))
+    loader=jinja2.PackageLoader(transit_feed.__name__, ''))
 
 TARGET_METHODS = {}
 
@@ -92,11 +96,11 @@ def main():
         for feed in args.feed or [None]:
             method(args, feed)
 
-    except Exception as e:  # pylint: disable=broad-except
+    except Exception as error:  # pylint: disable=broad-except
         if args.logging_level is logging.DEBUG:
             LOG.fatal("Unhandled exception.", exc_info=1)
         else:
-            LOG.fatal(str(e) or str(type(e)))
+            LOG.fatal(str(error) or str(type(error)))
         exit(1)
 
     except BaseException:
@@ -122,7 +126,7 @@ MethodParameters = collections.namedtuple(
 
 @target_method("all")
 def make_all(args):
-    # pylint: disable=unused-argument 
+    # pylint: disable=unused-argument
     raise NotImplementedError
 
 
@@ -144,7 +148,8 @@ def make_makefiles(args, feed_file=None):
                 target=target_path,
                 url=site["url"] + '/' + feed["path"],
                 make_flags="--logging-level " + str(args.logging_level),
-                make_me=' '.join(repr(arg) for arg in sys.argv))
+                make_me=' '.join(repr(arg) for arg in sys.argv),
+                script_name="transit_feed")
             with open(target_path + ".mk", 'wt') as target_stream:
                 target_stream.write(target_make)
 
@@ -185,15 +190,16 @@ def generate_trips(dest_dir, trips, route_id):
 def generate_tiled_stops(dest_dir, stops, max_stops=None):
     return tuple(_generate_tiled_stops(dest_dir, stops, max_stops))
 
+
 def _generate_tiled_stops(dest_dir, stops, max_stops):
 
     if not max_stops:
         max_stops = len(stops.id)
     max_stops = max(max_stops, 4)
 
-    tree = kdtree_from_table(
+    tree = create_tree(
         stops, pivot_keys=['lon', 'lat'], max_rows=max_stops)
-    for i, tile in enumerate(iter_kdtree(tree)):
+    for i, tile in enumerate(iter_tree(tree)):
         store_column(
             tile.name, dest_dir, 'stops', 'name' + str(i))
         store_column(
@@ -241,29 +247,19 @@ def timestamp_to_minutes(timestamp):
     timestamp = numpy.asarray(timestamp, dtype='S8')
     timestamp = numpy.core.defchararray.rjust(timestamp, 8, '0')
 
-    hours = ArrayView(
+    hours = array_from_data(  # pylint: disable=no-member
         data=timestamp.__array_interface__['data'],
-        shape=timestamp.shape, typestr='S2', strides=(8,))
-    hours = numpy.array(hours).astype(int) % 24
+        shape=timestamp.shape, typestr='S2', strides=(8,)
+        ).astype(int) % 24
 
-    minutes = ArrayView(
+    minutes = array_from_data(  # pylint: disable=no-member
         data=timestamp.__array_interface__['data'],
-        shape=timestamp.shape, typestr='S2', strides=(8,), offset=3)
-    minutes = numpy.array(minutes).astype(int) % 60
+        shape=timestamp.shape, typestr='S2', strides=(8,),
+        offset=3).astype(int) % 60
 
     timestamp = (hours * 60) + minutes
-    assert timestamp.max() <  24 * 60
+    assert timestamp.max() < 24 * 60
     return timestamp
-
-
-class ArrayView(object):
-
-    def __init__(self, data, shape, typestr, strides, offset=0):
-        if offset:
-            data = data[0] + offset, data[1]
-        self.__array_interface__ = {
-            'shape': shape, 'typestr': typestr, 'data': data,
-            'strides': strides, 'version': 3, 'offset': offset}
 
 
 def named_tuple(*fields):
@@ -329,7 +325,7 @@ class KDTree(object):
         stack = [obj]
         while stack:
             obj = stack.pop()
-            if(getattr(obj, '_is_kdtree', False)):
+            if getattr(obj, '_is_kdtree', False):
                 stack.append(obj.left)
                 stack.append(obj.right)
 
@@ -337,8 +333,8 @@ class KDTree(object):
                 yield obj
 
 
-kdtree_from_table = KDTree.from_table
-iter_kdtree = KDTree.iter_tree
+create_tree = KDTree.from_table  # pylint: disable=invalid-name
+iter_tree = KDTree.iter_tree  # pylint: disable=invalid-name
 
 
 @named_tuple('id', 'name')
@@ -352,7 +348,7 @@ class RouteTable(BaseTable):
         return cls(*columns).sort_by('id')
 
 
-read_routes = RouteTable.from_zip_file
+read_routes = RouteTable.from_zip_file  # pylint: disable=invalid-name
 
 
 @named_tuple('id', 'route_id', 'name')
@@ -366,7 +362,7 @@ class TripTable(BaseTable):
         return cls(*columns).sort_by('id')
 
 
-read_trips = TripTable.from_zip_file
+read_trips = TripTable.from_zip_file  # pylint: disable=invalid-name
 
 
 @named_tuple('lon', 'lat', 'id', 'name', 'indexes')
@@ -384,7 +380,7 @@ class StopTable(BaseTable):
         return cls(*columns).sort_by('id')
 
 
-read_stops = StopTable.from_zip_file
+read_stops = StopTable.from_zip_file  # pylint: disable=invalid-name
 
 
 @named_tuple('stop_id', 'trip_id', 'departure_minutes')
@@ -400,7 +396,9 @@ class StopTimeTable(BaseTable):
             departure_minutes=timestamp_to_minutes(departure_time))
 
 
-read_stop_times = StopTimeTable.from_zip_file
+read_stop_times = StopTimeTable.from_zip_file  # pylint: disable=invalid-name
+
+GET_COLUMN_NAME_REGEX = re.compile(b'[^\\w]')
 
 
 def read_table(zip_file, table_name, columns, dtypes=None):
@@ -411,13 +409,12 @@ def read_table(zip_file, table_name, columns, dtypes=None):
         hearer = csv_stream.readline().strip()
 
         names = [
-            remove_non_ascii(
-                name.strip().replace('"', '').replace("'", ''))
-            for name in hearer.split(',')]
+            GET_COLUMN_NAME_REGEX.sub(b'', name).decode('ascii')
+            for name in hearer.split(b',')]
 
         table = pandas.read_csv(
             csv_stream, names=names, quotechar='"', quoting=csv.QUOTE_ALL,
-            usecols=columns)
+            usecols=[col for col in columns])
         table = [
             numpy.asarray(remove_nans(table[column]), dtype=dtypes.get(column))
             for column in columns]
@@ -452,11 +449,24 @@ def read_yaml_file(feed_file):
         return yaml.load(feed_file_stream.read())
 
 
-def remove_non_ascii(text):
-    return ''.join(i for i in text if ord(i)<128)
+def array_from_data(data, shape, typestr, strides, offset=0):
+    if offset:
+        data = data[0] + offset, data[1],
+
+    # pylint: disable=no-member
+    return numpy.array(ArrayInterface(
+        shape=shape, typestr=typestr, data=data, strides=strides))
 
 
-if __name__ == "__main__":
-    # This prevents accidental writing to sys.stdout
-    sys.stdout = sys.stderr
-    main()
+@named_tuple('shape', 'typestr', 'data', 'strides')
+class ArrayInterface(object):
+    # pylint: disable=too-few-public-methods,no-member
+
+    @property
+    def __array_interface__(self):
+        return {
+            'shape': self.shape,
+            'typestr': self.typestr,
+            'data': self.data,
+            'strides': self.strides,
+            'version': 3}

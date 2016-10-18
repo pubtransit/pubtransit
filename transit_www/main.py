@@ -7,10 +7,13 @@ Created on 8 Oct 2016
 import logging
 import sys
 
-from departures_web.view import Application
+from transit_www.view import Application
 
 
 def main(args=None):
+    """It builds and prints to standard output the HTML page.
+    """
+
     # prevents to accidentally producing log messages on standard output
     out = sys.stdout
     sys.stdout = sys.stderr

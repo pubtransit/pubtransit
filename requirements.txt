@@ -1,0 +1,7 @@
+flask
+jinja2
+msgpack-python
+numpy
+pandas
+pyyaml
+six

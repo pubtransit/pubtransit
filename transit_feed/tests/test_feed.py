@@ -16,9 +16,10 @@ import zlib
 import msgpack
 import numpy
 import shutil
-import urllib2
+from six.moves import urllib  # pylint: disable=import-error
 
-from departures_feed.make import (
+
+from transit_feed.feed import (
     generate_tiled_stops, generate_tiled_stop_times, generate_routes,
     generate_trips, read_stops, read_stop_times, read_routes, read_trips)
 
@@ -146,8 +147,6 @@ class TestMake(unittest.TestCase):
             dest_dir=dest_dir, stop_times=stop_times, trip_id=trips.id,
             stops_id=stops.id, tiles=tiles)
 
-
-
     def read_column(self, table_dir, name, dtype=None):
         with open(os.path.join(table_dir, name), 'r') as column_file:
             packed = zlib.decompress(column_file.read())
@@ -177,13 +176,16 @@ class TestMake(unittest.TestCase):
 
     def open_feed_file(self, feed=None):
         if os.path.isdir(feed):
-            feed = self.get_feed_file(feed)
+            file_name = self.get_feed_file(feed)
         elif not os.path.isfile(feed):
             feed_url = feed
-            feed = str(hash(feed_url)) + '.zip'
-            retrieve_file(feed_url=feed_url, file_name=feed)
+            file_name = get_cache_file(feed.replace('://', '_'))
+            try:
+                retrieve_file(feed_url=feed_url, file_name=file_name)
+            except urllib.error.URLError as err:
+                self.skipTest(str(err))
 
-        zip_file = zipfile.ZipFile(feed)
+        zip_file = zipfile.ZipFile(file_name)
         self.addCleanup(zip_file.close)
         return zip_file
 
@@ -215,17 +217,6 @@ class TestMake(unittest.TestCase):
             self._peek_color = iter(self.PLOT_COLORS)
             return next(self._peek_color)
 
-        # {
-        #   "type": "Feature",
-        #   "geometry": {
-        #     "type": "Point",
-        #     "coordinates": [125.6, 10.1]
-        #   },
-        #   "properties": {
-        #     "name": "Dinagat Islands"
-        #   }
-        # }
-
     def clear_plot(self):
         import matplotlib.pyplot
         matplotlib.pyplot.clf()
@@ -242,10 +233,19 @@ class TestMake(unittest.TestCase):
         self.clear_plot()
 
 
+def get_cache_file(name):
+    parts = os.path.split(name)
+    chache_file = os.path.join('.', '.cache', *parts)
+    cache_dir = os.path.dirname(chache_file)
+    if not os.path.isdir(cache_dir):
+        os.makedirs(cache_dir)
+    return chache_file
+
+
 def retrieve_file(feed_url, file_name):
     try:
-        origin = urllib2.urlopen(feed_url, timeout=2)
-    except urllib2.URLError:
+        origin = urllib.request.urlopen(feed_url, timeout=5)
+    except urllib.error.URLError:
         if os.path.isfile(file_name):
             return False
         else:
@@ -253,60 +253,14 @@ def retrieve_file(feed_url, file_name):
 
     destination = None
     try:
-        actual_meta = parse_meta(str(origin.info()))
-        expected_size = int(actual_meta["content-length"])
+        _retrieve_file(origin, feed_url, file_name)
 
-        meta_file = file_name + '.meta'
-        if os.path.isfile(file_name) and os.path.isfile(meta_file):
-            try:
-                with open(meta_file, "rt") as meta_stream:
-                    expected_meta = json.load(meta_stream)
-                    for key in ["content-length", "content-type",
-                                "last-modified", "server"]:
-                        if actual_meta.get(key) != expected_meta.get(key):
-                            break
-                    else:
-                        statinfo = os.stat(file_name)
-                        if statinfo.st_size == expected_size:
-                            return False
-            except Exception:  # pylint: disable=broad-except
-                LOG.exception("Error comparing meta file: %r", meta_file)
-
-            os.remove(meta_file)
-
-        destination = open(file_name, 'wb')
-
-        chunk_size = 64 * 1024
-        actual_size = 0
-        print_progress = expected_size > chunk_size
-        if print_progress:
-            expected_progress = 20
-            actual_progress = 0
-            message = "Downloading '{feed_url}' ({size} bytes) ...".format(
-                feed_url=feed_url,
-                size=expected_size)
-            sys.stderr.write(message)
-
-        while True:
-            data = origin.read(chunk_size)
-            if not data:
-                break
-
-            destination.write(data)
-            actual_size += len(data)
-            if print_progress:
-                progress = actual_size * expected_progress / expected_size
-                sys.stderr.write('.' * (progress - actual_progress))
-                actual_progress = progress
-
-        sys.stderr.write(" DONE\n")
-        if actual_size < expected_size:
-            LOG.warning(
-                "After downloading %r I expected to have %d bytes but "
-                "I got %d.", file_name, expected_size, actual_size)
-
-        with open(meta_file, "wt") as meta_stream:
-            json.dump(actual_meta, meta_stream, indent=4, sort_keys=True)
+    except BaseException:
+        try:
+            os.remove(file_name)
+        except Exception:  # pylint: disable=broad-except
+            LOG.warning('Unable to delete file: %r', file_name)
+        raise
 
     finally:
         origin.close()
@@ -314,6 +268,63 @@ def retrieve_file(feed_url, file_name):
             destination.close()
 
     return True
+
+
+def _retrieve_file(origin, feed_url, file_name):
+    actual_meta = parse_meta(str(origin.info()))
+    expected_size = int(actual_meta["content-length"])
+
+    meta_file = file_name + '.meta'
+    if os.path.isfile(file_name) and os.path.isfile(meta_file):
+        try:
+            with open(meta_file, "rt") as meta_stream:
+                expected_meta = json.load(meta_stream)
+                for key in ["content-length", "content-type",
+                            "last-modified", "server"]:
+                    if actual_meta.get(key) != expected_meta.get(key):
+                        break
+                else:
+                    statinfo = os.stat(file_name)
+                    if statinfo.st_size == expected_size:
+                        return False
+        except Exception:  # pylint: disable=broad-except
+            LOG.exception("Error comparing meta file: %r", meta_file)
+
+        os.remove(meta_file)
+
+    destination = open(file_name, 'wb')
+
+    chunk_size = 64 * 1024
+    actual_size = 0
+    print_progress = expected_size > chunk_size
+    if print_progress:
+        expected_progress = 20
+        actual_progress = 0
+        message = "Downloading '{feed_url}' ({size} bytes) ...".format(
+            feed_url=feed_url,
+            size=expected_size)
+        sys.stderr.write(message)
+
+    while True:
+        data = origin.read(chunk_size)
+        if not data:
+            break
+
+        destination.write(data)
+        actual_size += len(data)
+        if print_progress:
+            progress = actual_size * expected_progress / expected_size
+            sys.stderr.write('.' * (progress - actual_progress))
+            actual_progress = progress
+
+    sys.stderr.write(" DONE\n")
+    if actual_size < expected_size:
+        LOG.warning(
+            "After downloading %r I expected to have %d bytes but "
+            "I got %d.", file_name, expected_size, actual_size)
+
+    with open(meta_file, "wt") as meta_stream:
+        json.dump(actual_meta, meta_stream, indent=4, sort_keys=True)
 
 
 def parse_meta(meta_string):
@@ -327,5 +338,4 @@ def parse_meta(meta_string):
 
 
 if __name__ == "__main__":
-    #import sys;sys.argv = ['', 'Test.testName']
     unittest.main()

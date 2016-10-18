@@ -92,3 +92,7 @@ ENV/
 /conf.yml
 /feeds/
 /.DS_Store
+
+# setup.py
+AUTHORS
+ChangeLog

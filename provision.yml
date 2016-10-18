@@ -1,4 +1,4 @@
-- name: Launch OpenStack
+- name: Provide www.pubtransit.org server
   hosts: all
   remote_user: ubuntu
   vars:
@@ -9,7 +9,7 @@
     become: true
     become_user: root
     retries: 3
-    apt: pkg="{{item}}" state=installed
+    apt: pkg="{{item}}" state=latest
          update_cache=yes cache_valid_time=3600
     with_items:
       - git
@@ -17,6 +17,7 @@
       - libxslt1-dev
       - python-setuptools
       - python-dev
+      - apache2
 
   - name: Ensure last pip is installed
     become: true
@@ -49,6 +50,10 @@
     retries: 3
     pip: requirements=/home/ubuntu/transit/requirements.txt
 
-
   - name: Build feeds and html files
     make: chdir=/home/ubuntu/transit target=all
+
+  - name: Installd feeds and html files
+    become: true
+    become_user: root
+    make: chdir=/home/ubuntu/transit target=install

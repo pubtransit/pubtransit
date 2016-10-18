@@ -1,0 +1,2 @@
+[www.pubtransit.org]
+www.pubtransit.org ansible_ssh_user=ubuntu

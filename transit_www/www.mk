@@ -1,14 +1,20 @@
-all: www
+build: build_www
 
-.PHONY: www
+install: install_www
 
-WWW_DIR = $(BUILD_DIR)/www
+.PHONY: build_www install_www
+
 WWW_SRC_DIR = transit_www
 WWW_SOURCES = $(shell find $(WWW_SRC_DIR)/ -type f -iregex ".*\.(py|html|js)")
-WWW_PRODUCTS = $(WWW_DIR)/index.html
 
-www: $(WWW_PRODUCTS)
+build_www: $(BUILD_DIR)/www/index.html
 
-$(WWW_PRODUCTS): $(WWW_SOURCES)
-	mkdir -p $(WWW_DIR)
-	python -m transit_www get-html > "$(WWW_DIR)/index.html"
+install_www: $(INSTALL_DIR)/index.html
+
+$(BUILD_DIR)/www/index.html: $(WWW_SOURCES)
+	mkdir -p $(@D)
+	python -m transit_www get-html > "$@"
+
+$(INSTALL_DIR)/index.html: $(BUILD_DIR)/www/index.html
+	mkdir -p $(@D)
+	cp "$<" "$@"

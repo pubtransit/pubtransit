@@ -145,10 +145,13 @@ def make_makefiles(args, feed_file=None):
             OUT_STREAM.write(target_path + ".mk ")
             target_template = TEMPLATE_MANAGER.get_template("feed.mk")
             target_make = target_template.render(
-                target=target_path,
+                install_dir=os.path.join('$(INSTALL_DIR)', 'feed'),
+                build_dir=args.build_dir,
+                target=os.path.join(site["name"], feed["name"]),
                 url=site["url"] + '/' + feed["path"],
                 make_flags="--logging-level " + str(args.logging_level),
-                make_me=' '.join(repr(arg) for arg in sys.argv),
+                make_me='python -m transit_feed ' + ' '.join(
+                    repr(arg) for arg in sys.argv[1:]),
                 script_name="transit_feed")
             with open(target_path + ".mk", 'wt') as target_stream:
                 target_stream.write(target_make)

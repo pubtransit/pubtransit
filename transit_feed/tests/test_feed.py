@@ -77,7 +77,10 @@ class TestMake(unittest.TestCase):
         self.assert_array_equal([stops.id], [tile.id for tile in tiles])
         self.assertEqual(
             [(dest_dir, [],
-              ['stops.lat0.gz', 'stops.lon0.gz', 'stops.name0.gz'])],
+              ['stop_tiles.east.gz', 'stop_tiles.north.gz',
+               'stop_tiles.south.gz', 'stop_tiles.tree.gz',
+               'stop_tiles.west.gz', 'stops.lat0.gz', 'stops.lon0.gz',
+               'stops.name0.gz'])],
             list(os.walk(dest_dir)))
         self.assert_array_almost_equal(
             stops.lon, self.read_column(dest_dir, 'stops.lon0.gz'))

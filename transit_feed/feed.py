@@ -191,27 +191,40 @@ def generate_trips(dest_dir, trips, route_id):
 
 
 def generate_tiled_stops(dest_dir, stops, max_stops=None):
-    return tuple(_generate_tiled_stops(dest_dir, stops, max_stops))
-
-
-def _generate_tiled_stops(dest_dir, stops, max_stops):
-
     if not max_stops:
         max_stops = len(stops.id)
     max_stops = max(max_stops, 4)
 
-    tree = create_tree(
+    tree, tiles = create_tree(
         stops, pivot_keys=['lon', 'lat'], max_rows=max_stops)
-    for i, tile in enumerate(iter_tree(tree)):
+
+    stop_tiles_num = len(tiles)
+    stop_tiles_west = numpy.zeros((stop_tiles_num,), dtype=float)
+    stop_tiles_east = numpy.zeros((stop_tiles_num,), dtype=float)
+    stop_tiles_south = numpy.zeros((stop_tiles_num,), dtype=float)
+    stop_tiles_north = numpy.zeros((stop_tiles_num,), dtype=float)
+    for i, tile in enumerate(tiles):
+        stop_tiles_west[i] = tile.west
+        stop_tiles_east[i] = tile.east
+        stop_tiles_south[i] = tile.south
+        stop_tiles_north[i] = tile.north
         store_column(
             tile.name, dest_dir, 'stops', 'name' + str(i))
         store_column(
             tile.lon, dest_dir, 'stops', 'lon' + str(i), float)
         store_column(
             tile.lat, dest_dir, 'stops', 'lat' + str(i), float)
-        yield tile
 
-    # TODO: KDTree here !!!
+    store_column(
+        stop_tiles_west, dest_dir, 'stop_tiles', 'west')
+    store_column(
+        stop_tiles_east, dest_dir, 'stop_tiles', 'east')
+    store_column(
+        stop_tiles_south, dest_dir, 'stop_tiles', 'south')
+    store_column(
+        stop_tiles_north, dest_dir, 'stop_tiles', 'north')
+    store_column(tree, dest_dir, 'stop_tiles', 'tree')
+    return tiles
 
 
 def generate_tiled_stop_times(
@@ -291,53 +304,32 @@ class BaseTable(tuple):
         return type(self)(*sorted_columns)
 
 
-@named_tuple('left', 'right', 'pivot_key', 'pivot_value')
-class KDTree(object):
+def create_tree(table, pivot_keys, max_rows=128):
+    table_class = type(table)
+    ndim = len(pivot_keys)
+    stack = [(table, 0)]
+    tree = []
+    leaves = []
 
-    _is_kdtree = True
-
-    @classmethod
-    def from_table(cls, table, pivot_keys, max_rows=128, level=0):
-        table_class = type(table)
-        ndim = len(pivot_keys)
-        pivot_key = pivot_keys[level % ndim]
-        pivot_column = getattr(table, pivot_key)
-        if len(pivot_column) <= max_rows:
-            return table
+    while stack:
+        table, level = stack.pop()
+        key = pivot_keys[level % ndim]
+        if len(getattr(table, key)) <= max_rows:
+            tree.append(len(leaves))
+            leaves.append(table)
 
         else:
-            table = table.sort_by(pivot_key)
+            table = table.sort_by(key)
             half = int(len(table.id) / 2)
-            pivot_value = [half]
-            left = cls.from_table(
-                table=table_class(*[column[:half] for column in table]),
-                pivot_keys=pivot_keys,
-                max_rows=max_rows,
-                level=level + 1)
+            value = [half]
+            tree.append((key, value))
+            left = table_class(*[col[:half] for col in table])
+            right = table_class(*[col[half:] for col in table])
+            stack.append((right, level + 1))
+            stack.append((left, level + 1))
 
-            right = cls.from_table(
-                table=table_class(*[column[half:] for column in table]),
-                pivot_keys=pivot_keys,
-                max_rows=max_rows,
-                level=level + 1)
-
-            return KDTree(left, right, pivot_key, pivot_value)
-
-    @staticmethod
-    def iter_tree(obj):
-        stack = [obj]
-        while stack:
-            obj = stack.pop()
-            if getattr(obj, '_is_kdtree', False):
-                stack.append(obj.left)
-                stack.append(obj.right)
-
-            else:
-                yield obj
-
-
-create_tree = KDTree.from_table  # pylint: disable=invalid-name
-iter_tree = KDTree.iter_tree  # pylint: disable=invalid-name
+    return (numpy.asarray(tree, dtype=object),
+            leaves)
 
 
 @named_tuple('id', 'name')
@@ -370,8 +362,7 @@ read_trips = TripTable.from_zip_file  # pylint: disable=invalid-name
 
 @named_tuple('lon', 'lat', 'id', 'name', 'indexes')
 class StopTable(BaseTable):
-
-    split_axis = 'lon'
+    # pylint: disable=no-member
 
     @classmethod
     def from_zip_file(cls, zip_file):
@@ -381,6 +372,42 @@ class StopTable(BaseTable):
             dtypes={'stop_lon': float, 'stop_lat': float})
         columns += (numpy.arange(len(columns[0])),)
         return cls(*columns).sort_by('id')
+
+    _west = None
+
+    @property
+    def west(self):
+        west = self._west
+        if west is None:
+            self._west = west = numpy.amin(self.lon)
+        return west
+
+    _east = None
+
+    @property
+    def east(self):
+        east = self._east
+        if east is None:
+            self._east = east = numpy.amax(self.lon)
+        return east
+
+    _south = None
+
+    @property
+    def south(self):
+        south = self._south
+        if south is None:
+            self._south = south = numpy.amin(self.lat)
+        return south
+
+    _north = None
+
+    @property
+    def north(self):
+        north = self._north
+        if north is None:
+            self._north = north = numpy.amax(self.lat)
+        return north
 
 
 read_stops = StopTable.from_zip_file  # pylint: disable=invalid-name
@@ -397,6 +424,8 @@ class StopTimeTable(BaseTable):
         return cls(
             stop_id=stop_id, trip_id=trip_id,
             departure_minutes=timestamp_to_minutes(departure_time))
+
+    _left = None
 
 
 read_stop_times = StopTimeTable.from_zip_file  # pylint: disable=invalid-name

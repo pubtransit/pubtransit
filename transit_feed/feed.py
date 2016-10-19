@@ -21,6 +21,7 @@ import pandas
 import yaml
 
 import transit_feed
+import shutil
 
 
 # pylint: disable=missing-docstring,fixme
@@ -143,7 +144,7 @@ def make_makefiles(args, feed_file=None):
 
             # pylint: disable=unused-argument,no-member
             OUT_STREAM.write(target_path + ".mk ")
-            target_template = TEMPLATE_MANAGER.get_template("feed.mk")
+            target_template = TEMPLATE_MANAGER.get_template("feed_item.mk")
             target_make = target_template.render(
                 install_dir=os.path.join('$(INSTALL_DIR)', 'feed'),
                 build_dir=args.build_dir,
@@ -160,8 +161,9 @@ def make_makefiles(args, feed_file=None):
 @target_method("datastore")
 def generate_datastores(args, feed_file):
     dest_dir = os.path.splitext(args.dest or args.source)[0]
-    if not os.path.isdir(dest_dir):
-        os.makedirs(dest_dir)
+    if os.path.isdir(dest_dir):
+        shutil.rmtree(dest_dir)
+    os.makedirs(dest_dir)
 
     with zipfile.ZipFile(feed_file) as zip_file:
         routes = read_routes(zip_file)
@@ -178,6 +180,48 @@ def generate_datastores(args, feed_file):
         generate_tiled_stop_times(
             dest_dir=dest_dir, stop_times=stop_times, trip_id=trips.id,
             stops_id=stops.id, tiles=tiles)
+
+    feed_info = dict(
+        west=stops.west, east=stops.east, south=stops.south, north=stops.north)
+    packed = msgpack.packb(feed_info)
+    zipped = zlib.compress(packed, 9)
+    with open(os.path.join(dest_dir, 'feed.gz'), 'wb') as out_stream:
+        out_stream.write(zipped)
+
+
+@target_method("index")
+def make_index(args, feed_file=None):
+    feeds_conf = read_yaml_file(feed_file or 'feeds.yaml')
+    paths = []
+    west = []
+    east = []
+    south = []
+    north = []
+    for site in feeds_conf['sites']:
+        for feed in site["feeds"]:
+            target_path = os.path.join(
+                args.build_dir, site["name"], feed["name"])
+
+            if not os.path.isdir(target_path):
+                LOG.error('Target feed dir not found: %r', target_path)
+                os.makedirs(target_path)
+
+            with open(os.path.join(target_path, 'feed.gz')) as in_stream:
+                zipped = in_stream.read()
+                packed = zlib.decompress(zipped)
+                feed_info = msgpack.unpackb(packed)
+
+            paths.append(os.path.join(site["name"], feed["name"]))
+            west.append(feed_info['west'])
+            east.append(feed_info['east'])
+            south.append(feed_info['south'])
+            north.append(feed_info['north'])
+
+    store_column(paths, args.build_dir, 'index', 'path')
+    store_column(west, args.build_dir, 'index', 'west', float)
+    store_column(east, args.build_dir, 'index', 'east', float)
+    store_column(south, args.build_dir, 'index', 'south', float)
+    store_column(north, args.build_dir, 'index', 'north', float)
 
 
 def generate_routes(dest_dir, routes):
@@ -461,7 +505,7 @@ def remove_nans(series):
 
 def store_column(array, dest_dir, table, column, dtype=None):
     if dtype:
-        array = array.astype(dtype)
+        array = numpy.asarray(array, dtype=dtype)
     packed = msgpack.packb(list(array))
     zipped = zlib.compress(packed, 9)
     dest_file = os.path.join(dest_dir, table) + "." + column + '.gz'
@@ -473,7 +517,8 @@ def store_column(array, dest_dir, table, column, dtype=None):
              '    array size: %d\n'
              '    packet size: %d bytes\n'
              '    zipped size: %d bytes.\n',
-             dest_file, array.dtype, array.size, len(packed), len(zipped))
+             dest_file, getattr(array, 'dtype', 'object'), len(array),
+             len(packed), len(zipped))
 
 
 def read_yaml_file(feed_file):

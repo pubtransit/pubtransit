@@ -2,25 +2,15 @@ build: build_feed
 
 install: install_feed
 
-.PHONY: build_feed install_feed {{ build_dir }}/{{ target }}.mk
+.PHONY: build_feed install_feed
 
-install_feed: {{ install_dir }}/{{ target }}/index.gz
+build_feed:
+	python -m transit_feed --target index --debug --build-dir $(BUILD_DIR)/feed
 
-build_feed: {{ build_dir }}/{{ target }}/index.gz
+include $(shell python -m transit_feed --target makefile --debug \
+    --build-dir $(BUILD_DIR)/feed)
 
-{{ build_dir }}/{{ target }}.mk:
-	{{ make_me }}
-
-{{ build_dir }}/{{ target }}.zip:
-	mkdir -p $(@D)
-	wget -c "{{ url }}" -O "$@"
-
-{{ build_dir }}/{{ target }}/index.gz: {{ build_dir }}/{{ target }}.zip
-	rm -fR $(@D)
-	python -m {{ script_name }} --target datastore {{ make_flags }} $< --dest $(@D)
-	touch $@
-
-{{ install_dir }}/{{ target }}/index.gz: {{ build_dir }}/{{ target }}/index.gz
-	rm -fR {{ install_dir }}/{{ target }}
-	mkdir -p {{ install_dir }}/{{ target }}
-	cp {{ build_dir }}/{{ target }}/*.gz $(@D)
+install_feed: build_feed
+	mkdir -p $(INSTALL_DIR)/feed
+	cp -fR $(BUILD_DIR)/feed/*.gz $(INSTALL_DIR)/feed
+	

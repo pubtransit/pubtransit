@@ -5,6 +5,7 @@ Created on 5 Oct 2016
 '''
 
 import logging
+import os
 import random
 
 from flask import Flask
@@ -36,6 +37,8 @@ class Application(object):
 
         # add the main HTML file with embedded javascripts
         app.add_url_rule(rule='/', view_func=self.get_html, methods=['GET'])
+        app.add_url_rule(
+            rule='/feed/<path>.gz', view_func=self.get_feed, methods=['GET'])
 
     def run(self):
         """It runs the flask application."""
@@ -52,3 +55,6 @@ class Application(object):
         gmak = random.choice(model.google_api_keys)
         return model.get_text_file(
             self.HTML_TEMPLATE, scripts='\n'.join(scripts), gmak=gmak)
+
+    def get_feed(self, path):
+        return self._model.get_feed(path)

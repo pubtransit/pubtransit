@@ -3,6 +3,7 @@ function Presenter(view, model) {
     this.model = model;
     this.view = view;
     this.transit = new TransitClient(model.transit);
+    this.feed = new Feed(model.feed);
     this._stopRequested = false;
     this._updateCurrentStopRequested = false;
     this.MIN_ZOOM = 15;
@@ -61,6 +62,10 @@ Presenter.prototype.requestStops = function() {
         this.model.bounds,
         function(stops) {self.receiveStops(stops)}
     ).send();
+    this.feed.requestStops(
+            this.model.bounds,
+            function(stops) {self.receiveStops(stops)}
+        );
     this._stopRequested = false;
 }
 

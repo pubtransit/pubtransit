@@ -10,6 +10,7 @@ function Model() {
     this.currentStop = null;
     this.buses = [];
     this.transit = {{ transit }};
+    this.feed = {{ feed }};
     this.zoom = 15;
     this.routes = {};
 }

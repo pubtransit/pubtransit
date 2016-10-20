@@ -130,7 +130,7 @@ TransitRequest.prototype.send = function() {
 }
 
 TransitRequest.prototype.parseRensponse = function(request) {
-    var response = JSON.parse(request.responseText );
+    var response = JSON.parse(request.responseText);
     this._responses.push(response);
     this.onRensponse(response);
     if(!this.done){

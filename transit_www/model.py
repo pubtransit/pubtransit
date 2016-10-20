@@ -6,12 +6,16 @@ Created on 6 Oct 2016
 
 import glob
 import json
+import logging
 import os
 
 import jinja2
 import yaml
 
 import transit_www
+
+
+LOG = logging.getLogger(__name__)
 
 
 class Model(object):
@@ -42,6 +46,7 @@ class Model(object):
         """It lads a template, replace veriables and return resulting file."""
 
         variables['transit'] = json.dumps(self._conf['transit'])
+        variables['feed'] = json.dumps(self._conf['feed'])
         text_file = self._text_files.get(file_name)
         if text_file is None:
             text_file = self._env.get_template(file_name).render(**variables)
@@ -57,3 +62,12 @@ class Model(object):
         for file_name in glob.glob(full_name):
             template_name = os.path.relpath(file_name, base_dir)
             yield self.get_text_file(template_name, **variables)
+
+    def get_feed(self, file_name):
+        """It lads and renders template files matching given wildcards."""
+        base_dir = self._conf['feed'][0]['dir']
+        target_file = os.path.abspath(
+            os.path.join(base_dir, file_name + '.gz'))
+        LOG.debug("Send feed file: %r", target_file)
+        with open(target_file, "rb") as stream:
+            return stream.read()

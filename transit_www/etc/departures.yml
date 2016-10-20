@@ -8,3 +8,7 @@ transit:
     location:
       lng: null
       lat: null
+
+feed:
+  - url: feed/
+    dir: build/feed

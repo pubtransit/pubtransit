@@ -248,10 +248,10 @@ def generate_tiled_stops(dest_dir, stops, max_rows=None):
     tiles_south = numpy.zeros(tiles_shape, dtype=float)
     tiles_north = numpy.zeros(tiles_shape, dtype=float)
     for i, tile in enumerate(tiles):
-        table_name = 'stops_' + format(i, tiles_id_format)
-        store_column(tile.name, dest_dir, table_name, 'name')
-        store_column(tile.lon, dest_dir, table_name, 'lon', float)
-        store_column(tile.lat, dest_dir, table_name, 'lat', float)
+        tile_dir = os.path.join(dest_dir, format(i, tiles_id_format))
+        store_column(tile.name, tile_dir, 'stops', 'name')
+        store_column(tile.lon, tile_dir, 'stops', 'lon', float)
+        store_column(tile.lat, tile_dir, 'stops', 'lat', float)
         tiles_west[i] = tile.west
         tiles_east[i] = tile.east
         tiles_south[i] = tile.south
@@ -287,14 +287,14 @@ def generate_tiled_stop_times(
 
     stop_times_trip_id = numpy.searchsorted(trip_id, stop_times.trip_id)
     for i in tile_id:
-        table_name = 'stop_times_' + format(i, tiles_id_format)
+        tile_dir = os.path.join(dest_dir, format(i, tiles_id_format))
         tile_slice = slice(stop_times_tile_start[i], stop_times_tile_stop[i])
         store_column(
-            stop_times_stop_id[tile_slice], dest_dir, table_name, 'stop_id')
+            stop_times_stop_id[tile_slice], tile_dir, 'stop_times', 'stop_id')
         store_column(
-            stop_times_trip_id[tile_slice], dest_dir, table_name, 'trip_id')
+            stop_times_trip_id[tile_slice], tile_dir, 'stop_times', 'trip_id')
         store_column(
-            stop_times.departure_minutes[tile_slice], dest_dir, table_name,
+            stop_times.departure_minutes[tile_slice], tile_dir, 'stop_times',
             'departure_minutes')
 
 
@@ -507,25 +507,15 @@ def store_column(array, dest_dir, table, column, dtype=None):
         array = numpy.asarray(array, dtype=dtype)
 
     if isinstance(array, list):
-        data = array
+        obj = array
     else:
-        data = list(array)
-    packed = msgpack.packb(data)
-    zipped = zlib.compress(packed, 9)
-    dest_file = os.path.join(dest_dir, table + "." + column + '.gz')
-    with open(dest_file, 'wb') as dest_stream:
-        dest_stream.write(zipped)
-    LOG.info('Column stored:\n'
-             '    path: %r\n'
-             '    dtype: %s\n'
-             '    array size: %d\n'
-             '    packet size: %d bytes\n'
-             '    zipped size: %d bytes.\n',
-             dest_file, getattr(array, 'dtype', 'object'), len(array),
-             len(packed), len(zipped))
+        obj = list(array)
+    store_object(obj, os.path.join(dest_dir, table), column)
 
 
 def store_object(obj, dest_dir, name):
+    if not os.path.isdir(dest_dir):
+        os.makedirs(dest_dir)
     packed = msgpack.packb(obj)
     zipped = zlib.compress(packed, 9)
     dest_file = os.path.join(dest_dir, name + '.gz')

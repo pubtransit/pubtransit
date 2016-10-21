@@ -63,11 +63,30 @@ class Model(object):
             template_name = os.path.relpath(file_name, base_dir)
             yield self.get_text_file(template_name, **variables)
 
-    def get_feed(self, file_name):
-        """It lads and renders template files matching given wildcards."""
-        base_dir = self._conf['feed'][0]['dir']
-        target_file = os.path.abspath(
-            os.path.join(base_dir, file_name + '.gz'))
-        LOG.debug("Send feed file: %r", target_file)
-        with open(target_file, "rb") as stream:
+    def iter_feeds(self):
+        target_dir = self._conf['feed'][0]['dir']
+        rule_dir = self._conf['feed'][0]['url']
+        for direrctory, _, file_names in os.walk(target_dir):
+            for name in file_names:
+                _, ext = os.path.splitext(name)
+                if ext == '.gz':
+                    feed_path = os.path.join(
+                        os.path.relpath(direrctory, target_dir), name)
+                    rule = '/'.join(["", rule_dir, feed_path])
+                    target_file = os.path.join(target_dir, feed_path)
+                    yield Feed(rule, target_file)
+
+
+class Feed(object):
+
+    def __init__(self, rule, target_file):
+        self.rule = rule
+        self.target_file = target_file
+
+    @property
+    def endpoint(self):
+        return 'feed' + str(id(self))
+
+    def view_func(self):
+        with open(self.target_file, "rb") as stream:
             return stream.read()

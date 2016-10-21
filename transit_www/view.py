@@ -36,11 +36,11 @@ class Application(object):
 
         # add the main HTML file with embedded javascripts
         app.add_url_rule(rule='/', view_func=self.get_html, methods=['GET'])
-        app.add_url_rule(
-            rule='/feed/<name>.gz', view_func=self.get_index, methods=['GET'])
-        app.add_url_rule(
-            rule='/feed/<dir1>/<dir2>/<name>.gz', view_func=self.get_feed,
-            methods=['GET'])
+        for feed in self._model.iter_feeds():
+            LOG.debug('map feed: %r -> %r', feed.rule, feed.target_file)
+            app.add_url_rule(
+                rule=feed.rule, endpoint=feed.endpoint,
+                view_func=feed.view_func, methods=['GET'])
 
     def run(self):
         """It runs the flask application."""
@@ -57,9 +57,3 @@ class Application(object):
         gmak = random.choice(model.google_api_keys)
         return model.get_text_file(
             self.HTML_TEMPLATE, scripts='\n'.join(scripts), gmak=gmak)
-
-    def get_index(self, name):
-        return self._model.get_feed(name)
-
-    def get_feed(self, dir1, dir2, name):
-        return self._model.get_feed('/'.join([dir1, dir2, name]))

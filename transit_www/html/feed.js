@@ -6,7 +6,7 @@ function Feed(conf) {
 Feed.prototype.requestStops = function(bounds, receiveStops) {
     log.debug("requestStops:", bounds)
     var self = this;
-    this.at().from('index').select(['path', 'west', 'east', 'south', 'north'])
+    this.from('index').select(['path', 'west', 'east', 'south', 'north'])
             .fetch(function(index) {
                 self.receiveIndex(index, bounds, receiveStops)
             });
@@ -25,7 +25,7 @@ Feed.prototype.receiveIndex = function(index, bounds, receiveStops) {
 Feed.prototype.requestStopTiles = function(path, bounds, receiveStops) {
     log.debug("requestStopTiles:", path, bounds, receiveStops)
     var self = this;
-    this.at(path).from('tree').select('*').fetch(function(tree) {
+    this.from(path).select(['tree']).fetch(function(tree) {
         self.receiveTree(tree, bounds, receiveStops);
     });
 }
@@ -34,14 +34,8 @@ Feed.prototype.receiveTree = function(tree, bounds, receiveStops) {
     log.debug('Tree received:', tree)
 }
 
-Feed.prototype.at = function(path) {
-    if (path) {
-        var url = this.conf[0].url + '/' + path;
-    } else {
-        var url = this.conf[0].url;
-    }
-    log.debug('At:', url)
-    return new FeedRequest(url, this.cache);
+Feed.prototype.from = function(path) {
+    return new FeedRequest(this.conf[0].url, this.cache).from(path);
 }
 
 // ----------------------------------------------------------------------------
@@ -49,33 +43,27 @@ Feed.prototype.at = function(path) {
 function FeedRequest(url, cache) {
     this.url = url;
     this.cache = cache;
-    this.table = null;
+    this.path = null;
     this.requests = {};
     this.responses = {};
     this.receiveFunc = null;
     this.done = true;
 }
 
-FeedRequest.prototype.from = function(table) {
-    this.table = table;
+FeedRequest.prototype.from = function(path) {
+    this.path = path;
     return this;
 }
 
-FeedRequest.prototype.select = function(columns) {
-    if (!this.from) {
-        throw new Error('Unspecified table name.');
+FeedRequest.prototype.select = function(names) {
+    if (!this.path) {
+        throw new Error('Unspecified path.');
     }
-    if (columns == '*') {
-        var url = this.url + '/' + this.table + '.gz';
-        log.debug("Select object from:", url);
-        this.requests['*'] = url;
-    } else {
-        for ( var i in columns) {
-            var column = columns[i];
-            var url = this.url + '/' + this.table + '.' + column + '.gz';
-            log.debug("Select column '" + column + "' from:", url);
-            this.requests[column] = url;
-        }
+    for ( var i in names) {
+        var name = names[i];
+        var url = this.url + '/' + this.path + '/' + name + '.gz';
+        log.debug("Select object '" + name + "' from:", url);
+        this.requests[name] = url;
     }
 
     return this;
@@ -87,7 +75,7 @@ FeedRequest.prototype.fetch = function(receiveFunc) {
     if (!this.done) {
         for ( var name in this.requests) {
             if (!(name in this.responses)) {
-                this.requestColumn(name, this.requests[name])
+                this.request(name, this.requests[name])
             }
         }
     }
@@ -112,7 +100,7 @@ FeedRequest.prototype.update = function() {
     this.receiveFunc(this.responses);
 }
 
-FeedRequest.prototype.requestColumn = function(name, url) {
+FeedRequest.prototype.request = function(name, url) {
     log.debug("Fetch '" + name + "' from: ", url)
     var self = this;
     var request = new XMLHttpRequest();

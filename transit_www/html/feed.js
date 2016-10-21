@@ -1,26 +1,54 @@
 function Feed(conf) {
     this.conf = conf;
+    this.cache = {};
 }
 
 Feed.prototype.requestStops = function(bounds, receiveStops) {
     log.debug("requestStops:", bounds)
     var self = this;
-    this.from('index').select(['path', 'west', 'east', 'south', 'north'])
+    this.at().from('index').select(['path', 'west', 'east', 'south', 'north'])
             .fetch(function(index) {
-                self.selectStops(index, bounds, receiveStops)
+                self.receiveIndex(index, bounds, receiveStops)
             });
 }
 
-Feed.prototype.selectStops = function(index, bounds, receiveStops) {
-    log.debug("TODO: selectStops:", index, bounds);
+Feed.prototype.receiveIndex = function(index, bounds, receiveStops) {
+    for ( var i in index.path) {
+        if (index.west[i] < bounds.east && index.east[i] > bounds.west
+                && index.south[i] < bounds.north
+                && index.north[i] > bounds.south) {
+            this.requestStopTiles(index.path[i], bounds, receiveStops);
+        }
+    }
 }
 
-Feed.prototype.from = function(table) {
-    return new FeedRequest(this.conf[0].url).from(table);
+Feed.prototype.requestStopTiles = function(path, bounds, receiveStops) {
+    log.debug("requestStopTiles:", path, bounds, receiveStops)
+    var self = this;
+    this.at(path).from('tree').select('*').fetch(function(tree) {
+        self.receiveTree(tree, bounds, receiveStops);
+    });
 }
 
-function FeedRequest(url) {
+Feed.prototype.receiveTree = function(tree, bounds, receiveStops) {
+    log.debug('Tree received:', tree)
+}
+
+Feed.prototype.at = function(path) {
+    if (path) {
+        var url = this.conf[0].url + '/' + path;
+    } else {
+        var url = this.conf[0].url;
+    }
+    log.debug('At:', url)
+    return new FeedRequest(url, this.cache);
+}
+
+// ----------------------------------------------------------------------------
+
+function FeedRequest(url, cache) {
     this.url = url;
+    this.cache = cache;
     this.table = null;
     this.requests = {};
     this.responses = {};
@@ -37,13 +65,19 @@ FeedRequest.prototype.select = function(columns) {
     if (!this.from) {
         throw new Error('Unspecified table name.');
     }
-
-    for (i in columns) {
-        var column = columns[i];
-        var url = this.url + this.table + '.' + column + '.gz';
-        log.debug("Select '" + column + "' from:", url);
-        this.requests[column] = url;
+    if (columns == '*') {
+        var url = this.url + '/' + this.table + '.gz';
+        log.debug("Select object from:", url);
+        this.requests['*'] = url;
+    } else {
+        for ( var i in columns) {
+            var column = columns[i];
+            var url = this.url + '/' + this.table + '.' + column + '.gz';
+            log.debug("Select column '" + column + "' from:", url);
+            this.requests[column] = url;
+        }
     }
+
     return this;
 }
 
@@ -51,16 +85,34 @@ FeedRequest.prototype.fetch = function(receiveFunc) {
     this.receiveFunc = receiveFunc;
     this.update();
     if (!this.done) {
-        for (name in this.requests) {
+        for ( var name in this.requests) {
             if (!(name in this.responses)) {
-                this.fetch_column(name, this.requests[name])
+                this.requestColumn(name, this.requests[name])
             }
         }
     }
     return this;
 }
 
-FeedRequest.prototype.fetch_column = function(name, url) {
+FeedRequest.prototype.update = function() {
+    for ( var name in this.requests) {
+        if (!(name in this.responses)) {
+            cached = this.cache[this.requests[name]]
+            if (cached) {
+                this.responses[name] = cached;
+            } else {
+                this.done = false;
+                return;
+            }
+        }
+    }
+
+    log.debug('Invoke callback function:', this.receiveFunc)
+    this.done = true;
+    this.receiveFunc(this.responses);
+}
+
+FeedRequest.prototype.requestColumn = function(name, url) {
     log.debug("Fetch '" + name + "' from: ", url)
     var self = this;
     var request = new XMLHttpRequest();
@@ -68,41 +120,26 @@ FeedRequest.prototype.fetch_column = function(name, url) {
     request.responseType = 'arraybuffer';
     request.setRequestHeader('Content-Type', 'application/gzip');
     request.addEventListener('load', function() {
-        self.receiveRensponse(name, request);
+        if (request.status != 200) {
+            log.error("Unable to request column:", name, url, request.status);
+        } else {
+            self.receiveResponse(name, url, new Uint8Array(request.response));
+        }
     });
     request.send();
 }
 
-FeedRequest.prototype.update = function(name, request) {
-    for (name in this.requests) {
-        if (!(name in this.responses)) {
-            // TODO Get from local storage here
-            this.done = false;
-            return;
-        }
-    }
-
-    log.debug('Invoke callback function:', this.receiveFunc)
-    this.receiveFunc(this.responses);
-    this.done = true;
-}
-
-FeedRequest.prototype.receiveRensponse = function(name, request) {
+FeedRequest.prototype.receiveResponse = function(name, url, response) {
     try {
-        if (request.status != 200) {
-            throw new Error("invalid request: " + request.status);
-        }
-
-        response = new Uint8Array(request.response)
-        log.debug("Received response for " + name + "'.")
-        var compressed = response;
-        var packed = pako.inflate(compressed);
+        log.debug("Received response for '" + name + "'.")
+        var packed = pako.inflate(response);
         var decoded = msgpack.decode(packed);
         this.responses[name] = decoded;
-        // TODO Update local storage here
+        this.cache[url] = decoded;
     } catch (error) {
-        log.error("Error getting rensponse for '" + name + "':",
-                error.message);
+        log
+                .error("Error getting rensponse for '" + name + "':",
+                        error.message);
         throw error;
     } finally {
         this.update();

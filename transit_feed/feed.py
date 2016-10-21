@@ -174,7 +174,7 @@ def generate_datastores(args, feed_file):
 
         stops = read_stops(zip_file)
         tiles = generate_tiled_stops(
-            dest_dir=dest_dir, stops=stops, max_stops=args.max_stops)
+            dest_dir=dest_dir, stops=stops, max_rows=args.max_stops)
 
         stop_times = read_stop_times(zip_file)
         generate_tiled_stop_times(
@@ -183,10 +183,7 @@ def generate_datastores(args, feed_file):
 
     feed_info = dict(
         west=stops.west, east=stops.east, south=stops.south, north=stops.north)
-    packed = msgpack.packb(feed_info)
-    zipped = zlib.compress(packed, 9)
-    with open(os.path.join(dest_dir, 'feed.gz'), 'wb') as out_stream:
-        out_stream.write(zipped)
+    store_object(feed_info, dest_dir, 'feed')
 
 
 @target_method("index")
@@ -234,45 +231,44 @@ def generate_trips(dest_dir, trips, route_id):
     store_column(trips.name, dest_dir, 'trips', 'name')
 
 
-def generate_tiled_stops(dest_dir, stops, max_stops=None):
-    if not max_stops:
-        max_stops = len(stops.id)
-    max_stops = max(max_stops, 4)
+def generate_tiled_stops(dest_dir, stops, max_rows=None):
+    if not max_rows:
+        max_rows = len(stops.id)
+    max_rows = max(max_rows, 4)
 
     tree, tiles = create_tree(
-        stops, pivot_keys=['lon', 'lat'], max_rows=max_stops)
+        stops, index_columns=['lon', 'lat'], max_rows=max_rows)
+    store_object(tree, dest_dir, 'tree')
 
-    stop_tiles_num = len(tiles)
-    stop_tiles_west = numpy.zeros((stop_tiles_num,), dtype=float)
-    stop_tiles_east = numpy.zeros((stop_tiles_num,), dtype=float)
-    stop_tiles_south = numpy.zeros((stop_tiles_num,), dtype=float)
-    stop_tiles_north = numpy.zeros((stop_tiles_num,), dtype=float)
+    tiles_num = len(tiles)
+    tiles_shape = tiles_num,
+    tiles_id_format = '0' + str(len(str(tiles_num)))
+    tiles_west = numpy.zeros(tiles_shape, dtype=float)
+    tiles_east = numpy.zeros(tiles_shape, dtype=float)
+    tiles_south = numpy.zeros(tiles_shape, dtype=float)
+    tiles_north = numpy.zeros(tiles_shape, dtype=float)
     for i, tile in enumerate(tiles):
-        stop_tiles_west[i] = tile.west
-        stop_tiles_east[i] = tile.east
-        stop_tiles_south[i] = tile.south
-        stop_tiles_north[i] = tile.north
-        store_column(
-            tile.name, dest_dir, 'stops', 'name' + str(i))
-        store_column(
-            tile.lon, dest_dir, 'stops', 'lon' + str(i), float)
-        store_column(
-            tile.lat, dest_dir, 'stops', 'lat' + str(i), float)
+        table_name = 'stops_' + format(i, tiles_id_format)
+        store_column(tile.name, dest_dir, table_name, 'name')
+        store_column(tile.lon, dest_dir, table_name, 'lon', float)
+        store_column(tile.lat, dest_dir, table_name, 'lat', float)
+        tiles_west[i] = tile.west
+        tiles_east[i] = tile.east
+        tiles_south[i] = tile.south
+        tiles_north[i] = tile.north
 
-    store_column(
-        stop_tiles_west, dest_dir, 'stop_tiles', 'west')
-    store_column(
-        stop_tiles_east, dest_dir, 'stop_tiles', 'east')
-    store_column(
-        stop_tiles_south, dest_dir, 'stop_tiles', 'south')
-    store_column(
-        stop_tiles_north, dest_dir, 'stop_tiles', 'north')
-    store_column(tree, dest_dir, 'stop_tiles', 'tree')
+    store_column(tiles_west, dest_dir, 'tiles', 'west')
+    store_column(tiles_east, dest_dir, 'tiles', 'east')
+    store_column(tiles_south, dest_dir, 'tiles', 'south')
+    store_column(tiles_north, dest_dir, 'tiles', 'north')
     return tiles
 
 
 def generate_tiled_stop_times(
         dest_dir, stop_times, trip_id, stops_id, tiles):
+
+    tiles_num = len(tiles)
+    tiles_id_format = '0' + str(len(str(tiles_num)))
 
     stop_times_stop_id = numpy.searchsorted(stops_id, stop_times.stop_id)
     stop_tile_id = numpy.ones(dtype=int, shape=stop_times_stop_id.shape)
@@ -283,7 +279,7 @@ def generate_tiled_stop_times(
     stop_times = stop_times.sort_by_array(
         stop_times_tile_id, sort_index_array=True)
 
-    tile_id = numpy.arange(len(tiles))
+    tile_id = numpy.arange(tiles_num)
     stop_times_tile_start = numpy.searchsorted(
         stop_times_tile_id, tile_id, side='left')
     stop_times_tile_stop = numpy.searchsorted(
@@ -291,16 +287,15 @@ def generate_tiled_stop_times(
 
     stop_times_trip_id = numpy.searchsorted(trip_id, stop_times.trip_id)
     for i in tile_id:
+        table_name = 'stop_times_' + format(i, tiles_id_format)
         tile_slice = slice(stop_times_tile_start[i], stop_times_tile_stop[i])
         store_column(
-            stop_times_stop_id[tile_slice], dest_dir, 'stop_times',
-            'stop_id' + str(i))
+            stop_times_stop_id[tile_slice], dest_dir, table_name, 'stop_id')
         store_column(
-            stop_times_trip_id[tile_slice], dest_dir, 'stop_times',
-            'trip_id' + str(i))
+            stop_times_trip_id[tile_slice], dest_dir, table_name, 'trip_id')
         store_column(
-            stop_times.departure_minutes[tile_slice], dest_dir, 'stop_times',
-            'departure_minutes' + str(i))
+            stop_times.departure_minutes[tile_slice], dest_dir, table_name,
+            'departure_minutes')
 
 
 def timestamp_to_minutes(timestamp):
@@ -348,32 +343,36 @@ class BaseTable(tuple):
         return type(self)(*sorted_columns)
 
 
-def create_tree(table, pivot_keys, max_rows=128):
+def create_tree(table, index_columns, max_rows=128):
     table_class = type(table)
-    ndim = len(pivot_keys)
-    stack = [(table, 0)]
-    tree = []
+    ndim = len(index_columns)
+    tree = {}
+    stack = [(tree, table, 0)]
     leaves = []
 
     while stack:
-        table, level = stack.pop()
-        key = pivot_keys[level % ndim]
-        if len(getattr(table, key)) <= max_rows:
-            tree.append(len(leaves))
+        node, table, level = stack.pop()
+        column_id = index_columns[level % ndim]
+        column = getattr(table, column_id)
+        if len(column) <= max_rows:
+            node['leaf'] = len(leaves)
             leaves.append(table)
 
         else:
-            table = table.sort_by(key)
-            half = int(len(table.id) / 2)
-            value = [half]
-            tree.append((key, value))
-            left = table_class(*[col[:half] for col in table])
-            right = table_class(*[col[half:] for col in table])
-            stack.append((right, level + 1))
-            stack.append((left, level + 1))
+            table = table.sort_by(column_id)
+            mid = int(len(column) // 2)
+            node['col'] = column_id
+            node['min'] = column[0]
+            node['mid'] = column[mid]
+            node['max'] = column[-1]
+            node['left'] = {}
+            node['right'] = {}
+            left = table_class(*[col[:mid] for col in table])
+            right = table_class(*[col[mid:] for col in table])
+            stack.append((node['right'], right, level + 1))
+            stack.append((node['left'], left, level + 1))
 
-    return (numpy.asarray(tree, dtype=object),
-            leaves)
+    return tree, leaves
 
 
 @named_tuple('id', 'name')
@@ -506,9 +505,14 @@ def remove_nans(series):
 def store_column(array, dest_dir, table, column, dtype=None):
     if dtype:
         array = numpy.asarray(array, dtype=dtype)
-    packed = msgpack.packb(list(array))
+
+    if isinstance(array, list):
+        data = array
+    else:
+        data = list(array)
+    packed = msgpack.packb(data)
     zipped = zlib.compress(packed, 9)
-    dest_file = os.path.join(dest_dir, table) + "." + column + '.gz'
+    dest_file = os.path.join(dest_dir, table + "." + column + '.gz')
     with open(dest_file, 'wb') as dest_stream:
         dest_stream.write(zipped)
     LOG.info('Column stored:\n'
@@ -519,6 +523,19 @@ def store_column(array, dest_dir, table, column, dtype=None):
              '    zipped size: %d bytes.\n',
              dest_file, getattr(array, 'dtype', 'object'), len(array),
              len(packed), len(zipped))
+
+
+def store_object(obj, dest_dir, name):
+    packed = msgpack.packb(obj)
+    zipped = zlib.compress(packed, 9)
+    dest_file = os.path.join(dest_dir, name + '.gz')
+    with open(dest_file, 'wb') as dest_stream:
+        dest_stream.write(zipped)
+    LOG.info('Object stored:\n'
+             '    path: %r\n'
+             '    packet size: %d bytes\n'
+             '    zipped size: %d bytes.\n',
+             dest_file, len(packed), len(zipped))
 
 
 def read_yaml_file(feed_file):

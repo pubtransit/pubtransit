@@ -10,5 +10,5 @@ transit:
       lat: null
 
 feed:
-  - url: feed/
+  - url: feed
     dir: build/feed

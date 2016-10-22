@@ -17,25 +17,86 @@ Feed.prototype.receiveIndex = function(index, bounds, receiveStops) {
         if (index.west[i] < bounds.east && index.east[i] > bounds.west
                 && index.south[i] < bounds.north
                 && index.north[i] > bounds.south) {
-            this.requestStopTiles(index.path[i], bounds, receiveStops);
+            this.requestTiles(index.path[i], bounds, receiveStops);
         }
     }
 }
 
-Feed.prototype.requestStopTiles = function(path, bounds, receiveStops) {
+Feed.prototype.requestTiles = function(path, bounds, receiveStops) {
     log.debug("requestStopTiles:", path, bounds, receiveStops)
     var self = this;
-    this.from(path).select(['tree']).fetch(function(tree) {
-        self.receiveTree(tree, bounds, receiveStops);
+    this.from(path + '/tiles').select(
+            ['tree', 'west', 'east', 'south', 'north']).fetch(function(tiles) {
+        self.receiveTiles(path, tiles, bounds, receiveStops);
     });
 }
 
-Feed.prototype.receiveTree = function(tree, bounds, receiveStops) {
-    log.debug('Tree received:', tree)
+Feed.prototype.receiveTiles = function(path, tiles, bounds, receiveStops) {
+    var nameLength = ("" + tiles.west.length).length;
+    var stack = [tiles.tree];
+    log.debug('receiveTiles:', path, bounds.west, bounds.east, bounds.south,
+            bounds.north);
+    while (stack.length > 0) {
+        var node = stack.pop();
+        if (node.leaf) {
+            // Leaf node
+            if (tiles.west[node.leaf] <= bounds.east
+                    && tiles.east[node.leaf] >= bounds.west
+                    && tiles.south[node.leaf] <= bounds.north
+                    && tiles.north[node.leaf] >= bounds.south) {
+                var tilePath = path + '/'
+                        + this.getTileName(node.leaf, nameLength);
+                this.requestTileStops(tilePath, receiveStops);
+            }
+        }
+        if (node.left) {
+            // Left node
+            // log.debug('Left node:', node.col, node.min, node.mid);
+            if (node.col == 'lon' && node.min <= bounds.east
+                    && node.mid >= bounds.west) {
+                stack.push(node.left);
+            } else if (node.col == 'lat' && node.min <= bounds.north
+                    && node.mid >= bounds.south) {
+                stack.push(node.left);
+            }
+        }
+        if (node.right) {
+            // Right node
+            // log.debug('Right node:', node.col, node.mid, node.max);
+            if (node.col == 'lon' && node.mid <= bounds.east
+                    && node.max >= bounds.west) {
+                stack.push(node.right);
+            } else if (node.col == 'lat' && node.mid <= bounds.north
+                    && node.max >= bounds.south) {
+                stack.push(node.right);
+            }
+        }
+    }
+}
+
+Feed.prototype.requestTileStops = function(path, receiveStops) {
+    log.debug("requestStopTiles:", path)
+    var self = this;
+    this.from(path + '/stops').select(['lon', 'lat', 'name']).fetch(
+            function(stops) {
+                self.receiveTileStops(stops, path, receiveStops);
+            });
+}
+
+Feed.prototype.receiveTileStops = function(stops, path, receiveStops) {
+    log.debug("receiveTileStops:", path)
 }
 
 Feed.prototype.from = function(path) {
     return new FeedRequest(this.conf[0].url, this.cache).from(path);
+}
+
+Feed.prototype.getTileName = function(tileId, length) {
+    var name = "" + tileId;
+    while (name.length < length) {
+        name = "0" + name;
+    }
+    return name;
 }
 
 // ----------------------------------------------------------------------------

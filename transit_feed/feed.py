@@ -7,6 +7,7 @@ Created on 11 Oct 2016
 import argparse
 import collections
 import csv
+import json
 import logging
 import os
 import re
@@ -236,9 +237,8 @@ def generate_tiled_stops(dest_dir, stops, max_rows=None):
         max_rows = len(stops.id)
     max_rows = max(max_rows, 4)
 
-    tree, tiles = create_tree(
+    tiles_tree, tiles = create_tree(
         stops, index_columns=['lon', 'lat'], max_rows=max_rows)
-    store_object(tree, dest_dir, 'tree')
 
     tiles_num = len(tiles)
     tiles_shape = tiles_num,
@@ -257,6 +257,7 @@ def generate_tiled_stops(dest_dir, stops, max_rows=None):
         tiles_south[i] = tile.south
         tiles_north[i] = tile.north
 
+    store_object(tiles_tree, os.path.join(dest_dir, 'tiles'), 'tree')
     store_column(tiles_west, dest_dir, 'tiles', 'west')
     store_column(tiles_east, dest_dir, 'tiles', 'east')
     store_column(tiles_south, dest_dir, 'tiles', 'south')
@@ -360,18 +361,24 @@ def create_tree(table, index_columns, max_rows=128):
 
         else:
             table = table.sort_by(column_id)
-            mid = int(len(column) // 2)
+            column = getattr(table, column_id)  # this is another table!!
+            mid = int(len(column) / 2)
             node['col'] = column_id
             node['min'] = column[0]
             node['mid'] = column[mid]
             node['max'] = column[-1]
             node['left'] = {}
             node['right'] = {}
+            assert node['min'] <= node['max']
+            assert node['min'] <= node['mid']
+            assert node['mid'] <= node['max']
+
             left = table_class(*[col[:mid] for col in table])
             right = table_class(*[col[mid:] for col in table])
             stack.append((node['right'], right, level + 1))
             stack.append((node['left'], left, level + 1))
 
+    LOG.debug('Tree generated:\n%s', json.dumps(tree, indent=4, sort_keys=True))
     return tree, leaves
 
 

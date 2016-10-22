@@ -70,7 +70,7 @@ Presenter.prototype.receiveStops = function(stops) {
     for ( var i in stops) {
         var stop = stops[i];
         this.model.pushStop(stop);
-        this.dropStopMarker(stop.stopId);
+        this.dropStopMarker(stop);
     }
 }
 
@@ -80,11 +80,11 @@ Presenter.prototype.receiveRoutes = function(routes) {
     }
 }
 
-Presenter.prototype.dropStopMarker = function(stopId) {
+Presenter.prototype.dropStopMarker = function(stop) {
     var self = this;
     function dropMarker() {
         if (self.model.zoom >= self.MIN_ZOOM) {
-            self.view.dropStopMarker(stopId);
+            self.view.dropStopMarker(stop);
         }
     }
     window.setTimeout(dropMarker, Math.random() * 1000.);
@@ -100,12 +100,19 @@ Presenter.prototype.setCurrentStop = function(stopId) {
     }
 }
 
-Presenter.prototype.requestBuses = function(stopId) {
-    log.debug("Get buses:", stopId);
+Presenter.prototype.requestBuses = function() {
+    stop = this.model.getCurrentStop();
+    log.debug("Get buses:", stop);
     var self = this;
-    this.transit.requestBuses(this.model.currentStop, function(buses) {
-        self.receiveBuses(buses)
-    }).send();
+    if (stop.provider == 'transit') {
+        this.transit.requestBuses(stop, function(buses) {
+            self.receiveBuses(buses);
+        }).send();
+    } else if (stop.provider == 'feed') {
+        this.feed.requestBuses(stop, function(buses) {
+            self.receiveBuses(buses);
+        });
+    }
 }
 
 Presenter.prototype.receiveBuses = function(buses) {
@@ -151,7 +158,6 @@ Presenter.prototype.receiveTransitRoutes = function(routes) {
     var routeIds = [];
     for ( var i in routes) {
         var routeEntry = routes[i];
-        log.debug("Parse bus route:", routeEntry);
 
         var stops = [];
         for (i in routeEntry.stop_pattern) {

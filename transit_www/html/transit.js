@@ -40,6 +40,7 @@ TransitClient.prototype.receiveStops = function(stops, receiveStopsAndRoutes) {
         var stopId = stop.onestop_id;
         var lonLat = stop.geometry.coordinates;
         outputStops.push({
+            provider: 'transit',
             stopId: stopId,
             lat: lonLat[1],
             lng: lonLat[0],
@@ -51,7 +52,7 @@ TransitClient.prototype.receiveStops = function(stops, receiveStopsAndRoutes) {
     receiveStopsAndRoutes(outputStops, outputRoutes);
 }
 
-TransitClient.prototype.requestBuses = function(stopId, receiveBuses) {
+TransitClient.prototype.requestBuses = function(stop, receiveBuses) {
     var request = this.busRequest;
     if (request) {
         request.stop();
@@ -59,7 +60,7 @@ TransitClient.prototype.requestBuses = function(stopId, receiveBuses) {
 
     this.busRequest = request = new TransitRequest(this
             .getUrl("/api/v1/schedule_stop_pairs"), {
-        origin_onestop_id: stopId
+        origin_onestop_id: stop.stopId
     });
     request.onRensponse = function(response) {
         receiveBuses(response.schedule_stop_pairs);

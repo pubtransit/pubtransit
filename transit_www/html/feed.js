@@ -85,6 +85,24 @@ Feed.prototype.requestTileStops = function(path, receiveStops) {
 
 Feed.prototype.receiveTileStops = function(stops, path, receiveStops) {
     log.debug("receiveTileStops:", path)
+    var outputStops = [];
+    for ( var i in stops.name) {
+        outputStops.push({
+            provider: 'feed',
+            stopId: path + ':' + i,
+            tilePath: path,
+            tileStopId: i,
+            lat: stops.lat[i],
+            lng: stops.lon[i] + 0.0001,
+            name: stops.name[i],
+            routes: [],
+        });
+    }
+    receiveStops(outputStops);
+}
+
+Feed.prototype.requestBuses = function(stop, receiveBuses){
+    log.debug('Request buses for stop:', stop);
 }
 
 Feed.prototype.from = function(path) {

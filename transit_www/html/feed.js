@@ -44,9 +44,8 @@ Feed.prototype.receiveTiles = function(path, tiles, bounds, receiveStops) {
                     && tiles.east[node.leaf] >= bounds.west
                     && tiles.south[node.leaf] <= bounds.north
                     && tiles.north[node.leaf] >= bounds.south) {
-                var tilePath = path + '/'
-                        + this.getTileName(node.leaf, nameLength);
-                this.requestTileStops(tilePath, receiveStops);
+                var tileName = this.getTileName(node.leaf, nameLength);
+                this.requestTileStops(path, tileName, receiveStops);
             }
         }
         if (node.left) {
@@ -74,26 +73,27 @@ Feed.prototype.receiveTiles = function(path, tiles, bounds, receiveStops) {
     }
 }
 
-Feed.prototype.requestTileStops = function(path, receiveStops) {
+Feed.prototype.requestTileStops = function(path, tileName, receiveStops) {
     log.debug("requestStopTiles:", path)
     var self = this;
-    this.from(path + '/stops').select(['lon', 'lat', 'name']).fetch(
-            function(stops) {
-                self.receiveTileStops(stops, path, receiveStops);
+    this.from(path + '/' + tileName + '/stops').select(['lon', 'lat', 'name'])
+            .fetch(function(stops) {
+                self.receiveTileStops(stops, path, tileName, receiveStops);
             });
 }
 
-Feed.prototype.receiveTileStops = function(stops, path, receiveStops) {
+Feed.prototype.receiveTileStops = function(stops, path, tileName, receiveStops) {
     log.debug("receiveTileStops:", path)
     var outputStops = [];
     for ( var i in stops.name) {
         outputStops.push({
             provider: 'feed',
-            stopId: path + ':' + i,
-            tilePath: path,
+            stopId: path + '/' + tileName + '#' + i,
+            path: path,
+            tileName: tileName,
             tileStopId: i,
-            lat: stops.lat[i],
-            lng: stops.lon[i] + 0.0001,
+            lat: stops.lat[i] - 0.0001,
+            lng: stops.lon[i],
             name: stops.name[i],
             routes: [],
         });
@@ -101,8 +101,33 @@ Feed.prototype.receiveTileStops = function(stops, path, receiveStops) {
     receiveStops(outputStops);
 }
 
-Feed.prototype.requestBuses = function(stop, receiveBuses){
-    log.debug('Request buses for stop:', stop);
+Feed.prototype.requestBuses = function(stop, handler) {
+    var self = this;
+    this.from(stop.path + '/routes').select(['name']).fetch(function(routes) {
+        self.receiveRoutes(routes, handler);
+    })
+    this.from(stop.path + '/trips').select(['name', 'route_id']).fetch(
+            function(trips) {
+                self.receiveTrips(trips, handler);
+            });
+
+    this.from(stop.path + '/' + stop.tileName + '/stop_times').select(
+            ['departure_minutes', 'stop_id', 'trip_id']).fetch(
+            function(stop_times) {
+                self.receiveStopTimes(stop_times, handler);
+            });
+}
+
+Feed.prototype.receiveRoutes = function(routes, handler) {
+    log.debug('Receive routes.');
+}
+
+Feed.prototype.receiveTrips = function(trips, handler) {
+    log.debug('Receive trips.');
+}
+
+Feed.prototype.receiveStopTimes = function(stop_times, handler) {
+    log.debug('Receive stop times.');
 }
 
 Feed.prototype.from = function(path) {

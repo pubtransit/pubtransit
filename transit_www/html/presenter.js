@@ -2,7 +2,7 @@ function Presenter(view, model) {
     this.model = model;
     this.view = view;
     this.transit = new TransitClient(model.transit);
-    this.feed = new Feed(model.feed);
+    this.feed = new FeedClient(model.feed, hanlder=this);
     this._stopRequested = false;
     this._updateCurrentStopRequested = false;
     this.MIN_ZOOM = 15;
@@ -56,9 +56,7 @@ Presenter.prototype.setZoom = function(zoom) {
 Presenter.prototype.requestStops = function() {
     log.debug("Get stops:", this.model.bounds);
     var self = this;
-    this.feed.requestStops(this.model.bounds, function(stops) {
-        self.receiveStops(stops);
-    });
+    this.feed.requestStops(this.model.bounds);
     this.transit.requestStops(this.model.bounds, function(stops, routes) {
         self.receiveStops(stops);
         self.receiveRoutes(routes);
@@ -109,9 +107,7 @@ Presenter.prototype.requestBuses = function() {
             self.receiveBuses(buses);
         }).send();
     } else if (stop.provider == 'feed') {
-        this.feed.requestBuses(stop, function(buses) {
-            self.receiveBuses(buses);
-        });
+        this.feed.requestStopTimes(stop);
     }
 }
 

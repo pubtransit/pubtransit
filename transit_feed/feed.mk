@@ -11,6 +11,6 @@ include $(shell python -m transit_feed --target makefile --debug \
     --build-dir $(BUILD_DIR)/feed)
 
 install_feed: build_feed
+	rm -fR $(INSTALL_DIR)/feed
 	mkdir -p $(INSTALL_DIR)/feed
-	cp -fR $(BUILD_DIR)/feed/*.gz $(INSTALL_DIR)/feed
-	
+	cp -fR $(BUILD_DIR)/feed $(INSTALL_DIR)

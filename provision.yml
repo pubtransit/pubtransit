@@ -36,6 +36,11 @@
       - setuptools
       - tox
 
+  - name: Set host name
+    become: true
+    become_user: root
+    hostname: name=www.pubtransit.org
+
   - name: Fix proxy environment
     become: true
     become_user: root

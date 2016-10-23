@@ -7,7 +7,7 @@ function View() {
     this.longitude = document.getElementById('longitude');
     this.zoom = document.getElementById('zoom');
     this.busWindow = null;
-    this.pinImages = null
+    this.pinIcons = null
 }
 
 View.prototype.centerCurrentPosition = function() {
@@ -86,7 +86,7 @@ View.prototype.dropStopMarker = function(stop) {
             position: this.model.stops[stop.stopId],
             map: view.map,
             animation: google.maps.Animation.DROP,
-            icon: this.pinIcons[stop.provider],
+            icon: this.pinIcons['feed'],
         });
         var self = this;
         marker.addListener('click', function() {

@@ -1,8 +1,7 @@
 function Presenter(view, model) {
     this.model = model;
     this.view = view;
-    this.transit = new TransitClient(model.transit);
-    this.feed = new FeedClient(model.feed, hanlder=this);
+    this.feed = new FeedClient(model.feed, hanlder = this);
     this._stopRequested = false;
     this._updateCurrentStopRequested = false;
     this.MIN_ZOOM = 15;
@@ -54,27 +53,16 @@ Presenter.prototype.setZoom = function(zoom) {
 }
 
 Presenter.prototype.requestStops = function() {
-    log.debug("Get stops:", this.model.bounds);
     var self = this;
     this.feed.requestStops(this.model.bounds);
-    this.transit.requestStops(this.model.bounds, function(stops, routes) {
-        self.receiveStops(stops);
-        self.receiveRoutes(routes);
-    }).send();
     this._stopRequested = false;
 }
 
 Presenter.prototype.receiveStops = function(stops) {
     for ( var i in stops) {
         var stop = stops[i];
-        this.model.pushStop(stop);
+        this.model.putStop(stop);
         this.dropStopMarker(stop);
-    }
-}
-
-Presenter.prototype.receiveRoutes = function(routes) {
-    for ( var i in routes) {
-        this.model.pushRoute(routes[i]);
     }
 }
 
@@ -91,83 +79,32 @@ Presenter.prototype.dropStopMarker = function(stop) {
 Presenter.prototype.setCurrentStop = function(stopId) {
     if (this.model.setCurrentStop(stopId)) {
         if (stopId) {
-            this.requestBuses();
-            this.requestRoutes();
+            var stop = this.model.getCurrentStop();
+            this.feed.requestRoutes(stop);
+            this.feed.requestTrips(stop);
+            this.feed.requestStopTimes(stop);
             this.updateCurrentStop();
         }
     }
 }
 
-Presenter.prototype.requestBuses = function() {
-    stop = this.model.getCurrentStop();
-    log.debug("Get buses:", stop);
-    var self = this;
-    if (stop.provider == 'transit') {
-        this.transit.requestBuses(stop, function(buses) {
-            self.receiveBuses(buses);
-        }).send();
-    } else if (stop.provider == 'feed') {
-        this.feed.requestStopTimes(stop);
+Presenter.prototype.receiveStopTimes = function(stopTimes) {
+    for ( var i in stopTimes) {
+        this.model.putStopTime(stopTimes[i]);
     }
-}
-
-Presenter.prototype.receiveBuses = function(buses) {
-    for ( var i in buses) {
-        var now = new Date();
-        var timeParts = buses[i].origin_arrival_time.split(':');
-        var time = new Date();
-        time.setHours(timeParts[0]);
-        time.setMinutes(timeParts[1]);
-        time.setSeconds(timeParts[2]);
-        var deltaTime = time - now;
-        if (deltaTime < 0) {
-            // increment the time by one day
-            time.setDate(time.getDate() + 1);
-            deltaTime = time - now;
-        }
-        var hasService = buses[i].service_days_of_week[time.getDay()];
-        if (hasService) {
-            var bus = {
-                routeId: buses[i].route_onestop_id,
-                destinationId: buses[i].destination_onestop_id,
-                time: time,
-                deltaTime: deltaTime,
-            };
-            log.debug("Update current buses:", bus);
-            this.model.pushBus(bus);
-        }
-    }
-    this.model.sortBuses();
     this.updateCurrentStop();
 }
 
-Presenter.prototype.requestRoutes = function(stopId) {
-    log.debug("Get routes:", stopId);
-    var self = this;
-    this.transit.requestRoutes(this.model.currentStop, function(routes) {
-        self.receiveTransitRoutes(routes)
-    }).send();
+Presenter.prototype.receiveRoutes = function(routes) {
+    for ( var i in routes) {
+        this.model.putRoute(routes[i]);
+    }
+    this.updateCurrentStop();
 }
 
-Presenter.prototype.receiveTransitRoutes = function(routes) {
-    // TODO move this to transit.js
-    var routeIds = [];
-    for ( var i in routes) {
-        var routeEntry = routes[i];
-
-        var stops = [];
-        for (i in routeEntry.stop_pattern) {
-            stops.push(routeEntry.stop_pattern[i])
-        }
-        var route = {
-            routeId: routeEntry.route_onestop_id,
-            stops: stops
-        }
-        routeIds.push(routeEntry.route_onestop_id);
-        this.model.pushRoute(route);
-    }
-    if (routeIds && routeIds.length > 0) {
-        this.requestRouteStops(routeIds);
+Presenter.prototype.receiveTrips = function(trips) {
+    for ( var i in trips) {
+        this.model.putTrip(trips[i]);
     }
     this.updateCurrentStop();
 }
@@ -186,12 +123,4 @@ Presenter.prototype.updateCurrentStop = function(routes) {
     } else {
         this._updateCurrentStopRequested = false;
     }
-}
-
-Presenter.prototype.requestRouteStops = function(routeIds) {
-    log.debug("Get stops for routes:", this.model.bounds);
-    var self = this;
-    this.transit.requestRouteStops(routeIds, function(stops) {
-        self.receiveStops(stops)
-    }).send();
 }

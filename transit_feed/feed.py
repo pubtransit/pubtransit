@@ -180,7 +180,7 @@ def generate_datastores(args, feed_file):
         stop_times = read_stop_times(zip_file)
         generate_tiled_stop_times(
             dest_dir=dest_dir, stop_times=stop_times, trip_id=trips.id,
-            stops_id=stops.id, tiles=tiles)
+            tiles=tiles)
 
     feed_info = dict(
         west=stops.west, east=stops.east, south=stops.south, north=stops.north)
@@ -265,38 +265,69 @@ def generate_tiled_stops(dest_dir, stops, max_rows=None):
     return tiles
 
 
-def generate_tiled_stop_times(
-        dest_dir, stop_times, trip_id, stops_id, tiles):
+def generate_tiled_stop_times(dest_dir, stop_times, trip_id, tiles):
 
     tiles_num = len(tiles)
     tiles_id_format = '0' + str(len(str(tiles_num)))
 
-    stop_times_stop_id = numpy.searchsorted(stops_id, stop_times.stop_id)
-    stop_tile_id = numpy.ones(dtype=int, shape=stop_times_stop_id.shape)
-    for i, tile in enumerate(tiles):
-        stop_tile_id[tile.indexes] = i
+    stop_times = stop_times.sort_by('stop_id')
+    trip_id_sorter = numpy.argsort(trip_id)
 
-    stop_times_tile_id = stop_tile_id[stop_times_stop_id]
-    stop_times = stop_times.sort_by_array(
-        stop_times_tile_id, sort_index_array=True)
+    for tile_id, stops in enumerate(tiles):
+        stop_id = stops.id
+        stop_id_sorter = numpy.argsort(stop_id)
 
-    tile_id = numpy.arange(tiles_num)
-    stop_times_tile_start = numpy.searchsorted(
-        stop_times_tile_id, tile_id, side='left')
-    stop_times_tile_stop = numpy.searchsorted(
-        stop_times_tile_id, tile_id, side='right')
+        tile_start = numpy.searchsorted(
+            stop_id, stop_times.stop_id, side='left', sorter=stop_id_sorter)
+        tile_stop = numpy.searchsorted(
+            stop_id, stop_times.stop_id, side='right', sorter=stop_id_sorter)
+        tiled_stop_times = stop_times.select(tile_start != tile_stop)
 
-    stop_times_trip_id = numpy.searchsorted(trip_id, stop_times.trip_id)
-    for i in tile_id:
-        tile_dir = os.path.join(dest_dir, format(i, tiles_id_format))
-        tile_slice = slice(stop_times_tile_start[i], stop_times_tile_stop[i])
+        tiled_stop_times_stop_id = stop_id_sorter[numpy.searchsorted(
+            stop_id, tiled_stop_times.stop_id, sorter=stop_id_sorter)]
+
+        tiled_stop_times_tile_id = trip_id_sorter[numpy.searchsorted(
+            trip_id, tiled_stop_times.trip_id,
+            sorter=trip_id_sorter)]
+
+        tile_dir = os.path.join(dest_dir, format(tile_id, tiles_id_format))
+
+        tile_dir = os.path.join(dest_dir, format(tile_id, tiles_id_format))
         store_column(
-            stop_times_stop_id[tile_slice], tile_dir, 'stop_times', 'stop_id')
+            tiled_stop_times_stop_id, tile_dir, 'stop_times', 'stop_id')
         store_column(
-            stop_times_trip_id[tile_slice], tile_dir, 'stop_times', 'trip_id')
+            tiled_stop_times_tile_id, tile_dir, 'stop_times', 'trip_id')
         store_column(
-            stop_times.departure_minutes[tile_slice], tile_dir, 'stop_times',
+            tiled_stop_times.departure_minutes, tile_dir, 'stop_times',
             'departure_minutes')
+
+
+#     stop_times_stop_id = numpy.searchsorted(stops_id, stop_times.stop_id)
+#     stop_tile_id = numpy.ones(dtype=int, shape=stop_times_stop_id.shape)
+#     for i, tile in enumerate(tiles):
+#         stop_tile_id[tile.indexes] = i
+# 
+#     stop_times_tile_id = stop_tile_id[stop_times_stop_id]
+#     stop_times = stop_times.sort_by_array(
+#         stop_times_tile_id, sort_index_array=True)
+# 
+#     tile_id = numpy.arange(tiles_num)
+#     stop_times_tile_start = numpy.searchsorted(
+#         stop_times_tile_id, tile_id, side='left')
+#     stop_times_tile_stop = numpy.searchsorted(
+#         stop_times_tile_id, tile_id, side='right')
+# 
+#     stop_times_trip_id = numpy.searchsorted(trip_id, stop_times.trip_id)
+#     for i in tile_id:
+#         tile_dir = os.path.join(dest_dir, format(i, tiles_id_format))
+#         tile_slice = slice(stop_times_tile_start[i], stop_times_tile_stop[i])
+#         store_column(
+#             stop_times_stop_id[tile_slice], tile_dir, 'stop_times', 'stop_id')
+#         store_column(
+#             stop_times_trip_id[tile_slice], tile_dir, 'stop_times', 'trip_id')
+#         store_column(
+#             stop_times.departure_minutes[tile_slice], tile_dir, 'stop_times',
+#             'departure_minutes')
 
 
 def timestamp_to_minutes(timestamp):
@@ -337,12 +368,14 @@ class BaseTable(tuple):
         # sort all columns by given index
         if sorter is None:
             sorter = numpy.argsort(index_array)
-        sorted_columns = [
-            column[sorter] for column in self if column is not None]
         if sort_index_array:
             index_array[:] = index_array[sorter]
-        return type(self)(*sorted_columns)
+        return self.select(sorter)
 
+    def select(self, item):
+        values = [
+            column[item] for column in self if column is not None]
+        return type(self)(*values)
 
 def create_tree(table, index_columns, max_rows=128):
     table_class = type(table)

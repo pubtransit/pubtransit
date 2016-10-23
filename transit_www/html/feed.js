@@ -88,70 +88,78 @@ FeedClient.prototype.receiveTileStops = function(stops, path, tileName) {
     var outputStops = [];
     for ( var i in stops.name) {
         outputStops.push({
-            provider: 'feed',
             stopId: path + '/' + tileName + '#' + i,
             path: path,
             tileName: tileName,
             tileStopId: i,
-            lat: stops.lat[i] - 0.0001,
+            lat: stops.lat[i],
             lng: stops.lon[i],
             name: stops.name[i],
-            routes: [],
+            times: {},
         });
     }
     this.handler.receiveStops(outputStops);
 }
 
-FeedClient.prototype.requestStopTimes = function(stop) {
+FeedClient.prototype.requestRoutes = function(stop) {
     var self = this;
     this.from(stop.path + '/routes').select(['name']).fetch(function(routes) {
         self.receiveRoutes(routes, stop.path);
     })
-    this.from(stop.path + '/trips').select(['name', 'route_id']).fetch(
-            function(trips) {
-                self.receiveTrips(trips, stop.path);
-            });
-
-    this.from(stop.path + '/' + stop.tileName + '/stop_times').select(
-            ['departure_minutes', 'stop_id', 'trip_id']).fetch(
-            function(stop_times) {
-                self.receiveStopTimes(stop_times, stop.path);
-            });
 }
 
 FeedClient.prototype.receiveRoutes = function(routes, path) {
     log.debug('Receive routes.');
     outputRoutes = [];
-    for (var i in routes.name) {
+    for ( var i in routes.name) {
         outputRoutes.push({
             name: routes.name[i],
-            routeId: path + '#' + 'i',
+            routeId: path + '#' + i,
         });
     }
     this.handler.receiveRoutes(outputRoutes);
 }
 
+FeedClient.prototype.requestTrips = function(stop) {
+    var self = this;
+    this.from(stop.path + '/trips').select(['name', 'route_id']).fetch(
+            function(trips) {
+                self.receiveTrips(trips, stop.path);
+            });
+}
+
 FeedClient.prototype.receiveTrips = function(trips, path) {
     log.debug('Receive trips.');
     outputTrips = [];
-    for (var i in trips.name) {
+    for ( var i in trips.name) {
         outputTrips.push({
             name: trips.name[i],
-            tripId: path + '#' + 'i',
+            tripId: path + '#' + i,
             routeId: path + '#' + trips.route_id[i],
         });
     }
     this.handler.receiveTrips(outputTrips);
 }
 
-FeedClient.prototype.receiveStopTimes = function(stopTimes, path) {
+FeedClient.prototype.requestStopTimes = function(stop) {
+    var self = this;
+    this.from(stop.path + '/' + stop.tileName + '/stop_times').select(
+            ['departure_minutes', 'stop_id', 'trip_id']).fetch(
+            function(stop_times) {
+                self.receiveStopTimes(stop_times, stop);
+            });
+}
+
+FeedClient.prototype.receiveStopTimes = function(stopTimes, stop) {
     log.debug('Receive stop times.');
     outputStopTimes = [];
-    for (var i in stopTimes.name) {
+    for ( var i in stopTimes.stop_id) {
         outputStopTimes.push({
-            name: stopTimes.name[i],
-            tripId: path + '#' + stopTimes.trip_id[i],
-            stopId: path + '#' + stopTimes.stop_id[i],
+            stopTimeId: stop.path + '/' + stop.tileName + '#' + i,
+            stopId: stop.path + '/' + stop.tileName + '#'
+                    + stopTimes.stop_id[i],
+            tripId: stop.path + '#' + stopTimes.trip_id[i],
+            departureMinutes: stopTimes.departure_minutes[i],
         });
     }
     this.handler.receiveStopTimes(outputStopTimes);

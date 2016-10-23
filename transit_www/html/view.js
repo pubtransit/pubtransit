@@ -113,45 +113,49 @@ View.prototype.updateCurrentStop = function() {
                 "<tr>" + "<td><h4>Route</h4></td>"
                         + "<td><h4>Destination</h4></td>"
                         + "<td><h4>Time</h4></td>" + "<tr>", ];
-        for ( var busId in this.model.buses) {
-            var bus = this.model.buses[busId];
-            var route = this.model.routes[bus.routeId];
-            if (route) {
-                var routeName = route.name;
-                var routeStops = route.stops;
-            } else {
-                var routeName = bus.routeId.split('-')[2];
-                var routeStops = null;
+
+        var stopTimes = this.model.getCurrentStopTimes();
+        var entries = []
+        for ( var i in stopTimes) {
+            var stopTime = stopTimes[i];
+            var trip = this.model.trips[stopTime.tripId];
+            var route = this.model.routes[trip.routeId];
+
+            var time = new Date();
+            time.setHours(0);
+            time.setMinutes(stopTime.departureMinutes);
+            time.setSeconds(0);
+
+            var now = new Date();
+            var deltaTime = time - now;
+            if (deltaTime < 0) {
+                // increment the time by one day
+                time.setDate(time.getDate() + 1);
+                deltaTime = time - now;
             }
 
-            if (routeStops && routeStops.length > 0) {
-                departureIndex = routeStops.indexOf(currentStop.stopId);
-                destinationIndex = routeStops.indexOf(bus.destinationId);
-                if (departureIndex > destinationIndex) {
-                    var finalDestinationId = routeStops[0];
-                } else {
-                    var finalDestinationId = routeStops[routeStops.length - 1];
-                }
-            } else {
-                finalDestinationId = bus.destinationId;
-            }
-
-            var destinationStop = this.model.stops[finalDestinationId];
-            if (destinationStop) {
-                var destinationName = destinationStop.name;
-            } else {
-                var destinationName = finalDestinationId.split('-')[2];
-            }
-            var remainingMinutes = Math.ceil(bus.deltaTime / (1000 * 60));
+            var remainingMinutes = Math.ceil(deltaTime / (1000 * 60));
             if (remainingMinutes < 60.) {
-                var time = [remainingMinutes, "min."].join(" ")
+                var timeStamp = [remainingMinutes, "min."].join(" ")
             } else {
-                var time = [bus.time.getHours(), bus.time.getSeconds(),
-                        bus.time.getMinutes()].join(':');
+                var timeStamp = [time.getHours(), time.getMinutes(),
+                        time.getSeconds()].join(':');
             }
-            var row = "<tr>" + "<td><h5>" + routeName + "</h5></td>" + "<td>"
-                    + destinationName + "</td>" + "<td><h5>" + time
-                    + "</h5></td>" + "<tr>";
+
+            entries.push({
+                route: route.name,
+                trip: trip.name,
+                deltaTime: deltaTime,
+                timeStamp: timeStamp
+            });
+        }
+        entries = entries.sort(function(a, b) {
+            return a.deltaTime - b.deltaTime;
+        });
+        for ( var i in entries) {
+            var row = "<tr>" + "<td><h5>" + entries[i].route + "</h5></td>"
+                    + "<td>" + entries[i].trip + "</td>" + "<td><h5>"
+                    + entries[i].timeStamp + "</h5></td>" + "<tr>";
             busInfos.push(row);
         }
         busInfos.push('</table>');

@@ -8,11 +8,11 @@ function Model() {
     };
     this.stops = {};
     this.currentStop = null;
-    this.buses = [];
     this.transit = {{ transit }};
     this.feed = {{ feed }};
     this.zoom = 15;
     this.routes = {};
+    this.trips = {};
 }
 
 Model.prototype.setBounds = function(bounds) {
@@ -40,15 +40,15 @@ Model.prototype.setZoom = function(zoom) {
     this.zoom = zoom
 }
 
-Model.prototype.pushStop = function(stop) {
-    var stopId = stop.stopId;
-    this.stops[stop.stopId] = stop;
+Model.prototype.putStop = function(stop) {
+    if (!(stop.stopId in this.stops)) {
+        this.stops[stop.stopId] = stop;
+    }
 }
 
 Model.prototype.setCurrentStop = function(stopId) {
     if (stopId != this.currentStop) {
         this.currentStop = stopId;
-        this.buses = [];
         return true;
     }
 }
@@ -57,20 +57,11 @@ Model.prototype.getCurrentStop = function() {
     return this.stops[this.currentStop];
 }
 
-Model.prototype.pushBus = function(bus) {
-    this.buses.push(bus);
+Model.prototype.putStopTime = function(stopTime) {
+    this.stops[stopTime.stopId].times[stopTime.stopTimeId] = stopTime;
 }
 
-Model.prototype.sortBuses = function() {
-    this.buses.sort(
-        function(bus1, bus2) {
-            return bus1.time - bus2.time;
-        }
-    );
-}
-
-Model.prototype.pushRoute = function(route) {
-    var routeId = route.routeId;
+Model.prototype.putRoute = function(route) {
     if(route.routeId in this.routes) {
         for(key in route) {
             this.routes[route.routeId][key] = route[key];
@@ -78,4 +69,24 @@ Model.prototype.pushRoute = function(route) {
     } else {
         this.routes[route.routeId] = route;
     }
+}
+
+Model.prototype.putTrip = function(trip) {
+    if(trip.tripId in this.trips) {
+        for(key in trip) {
+            this.trips[trip.tripId][key] = trip[key];
+        }
+    } else {
+        this.trips[trip.tripId] = trip;
+    }
+}
+
+Model.prototype.getCurrentStopTimes = function() {
+    var stopTimes = [];
+    var stop = this.getCurrentStop();
+    for (var i in stop.times) {
+        stopTimes.push(stop.times[i]);
+    }
+
+    return stopTimes;
 }

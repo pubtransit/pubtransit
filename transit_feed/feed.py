@@ -197,7 +197,7 @@ def make_index(args, feed_file=None):
     east = []
     south = []
     north = []
-    for site in feeds_conf['sites']:
+    for site in feeds_conf['feed']:
         for feed in site["feeds"]:
             target_path = os.path.join(
                 args.build_dir, site["name"], feed["name"])
@@ -302,34 +302,6 @@ def generate_tiled_stop_times(dest_dir, stop_times, trip_id, tiles):
         store_column(
             tiled_stop_times.departure_minutes, tile_dir, 'stop_times',
             'departure_minutes')
-
-
-#     stop_times_stop_id = numpy.searchsorted(stops_id, stop_times.stop_id)
-#     stop_tile_id = numpy.ones(dtype=int, shape=stop_times_stop_id.shape)
-#     for i, tile in enumerate(tiles):
-#         stop_tile_id[tile.indexes] = i
-# 
-#     stop_times_tile_id = stop_tile_id[stop_times_stop_id]
-#     stop_times = stop_times.sort_by_array(
-#         stop_times_tile_id, sort_index_array=True)
-# 
-#     tile_id = numpy.arange(tiles_num)
-#     stop_times_tile_start = numpy.searchsorted(
-#         stop_times_tile_id, tile_id, side='left')
-#     stop_times_tile_stop = numpy.searchsorted(
-#         stop_times_tile_id, tile_id, side='right')
-# 
-#     stop_times_trip_id = numpy.searchsorted(trip_id, stop_times.trip_id)
-#     for i in tile_id:
-#         tile_dir = os.path.join(dest_dir, format(i, tiles_id_format))
-#         tile_slice = slice(stop_times_tile_start[i], stop_times_tile_stop[i])
-#         store_column(
-#             stop_times_stop_id[tile_slice], tile_dir, 'stop_times', 'stop_id')
-#         store_column(
-#             stop_times_trip_id[tile_slice], tile_dir, 'stop_times', 'trip_id')
-#         store_column(
-#             stop_times.departure_minutes[tile_slice], tile_dir, 'stop_times',
-#             'departure_minutes')
 
 
 def timestamp_to_minutes(timestamp):

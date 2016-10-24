@@ -18,7 +18,7 @@ feed:
    feeds:
 
      - name: emt
-       url: https://servicios.emtmadrid.es:8443/gtfs/transitemt.zip
+       url: https://transitfeeds-data.s3-us-west-1.amazonaws.com/public/feeds/emt-madrid/212/20161003/gtfs.zip
 
 
  - name: ie  # Ireland

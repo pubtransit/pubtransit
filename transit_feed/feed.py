@@ -80,7 +80,7 @@ def main():
         const=logging.DEBUG, default=None, help='Show debug messages.')
 
     parser.add_argument(
-        'feed', type=str, default=['feeds.yaml'], nargs='*',
+        'files', type=str, default=['site.yaml'], nargs='*',
         help='Feed file to extract feed rules from.')
 
     parser.add_argument(
@@ -95,8 +95,8 @@ def main():
     method = TARGET_METHODS[args.target[0]]
 
     try:
-        for feed in args.feed or [None]:
-            method(args, feed)
+        for inpute_file in args.files or [None]:
+            method(args, inpute_file)
 
     except Exception as error:  # pylint: disable=broad-except
         if args.logging_level is logging.DEBUG:
@@ -133,15 +133,17 @@ def make_all(args):
 
 
 @target_method("makefile")
-def make_makefiles(args, feed_file=None):
-    feeds_conf = read_yaml_file(feed_file or 'feeds.yaml')
-    for site in feeds_conf['sites']:
+def make_makefiles(args, site_file=None):
+    feeds_conf = read_yaml_file(site_file or 'site.yaml')
+    for site in feeds_conf['feed']:
         for feed in site["feeds"]:
             target_path = os.path.join(
                 args.build_dir, site["name"], feed["name"])
 
             if not os.path.isdir(target_path):
                 os.makedirs(target_path)
+
+            url = feed.get("url") or (site["url"] + '/' + feed["path"])
 
             # pylint: disable=unused-argument,no-member
             OUT_STREAM.write(target_path + ".mk ")
@@ -150,7 +152,7 @@ def make_makefiles(args, feed_file=None):
                 install_dir=os.path.join('$(INSTALL_DIR)', 'feed'),
                 build_dir=args.build_dir,
                 target=os.path.join(site["name"], feed["name"]),
-                url=site["url"] + '/' + feed["path"],
+                url=url,
                 make_flags="--logging-level " + str(args.logging_level),
                 make_me='python -m transit_feed ' + ' '.join(
                     repr(arg) for arg in sys.argv[1:]),

@@ -1,0 +1,48 @@
+feed:
+
+ - name: ca  # California
+   feeds:
+
+     - name: bart
+       url: http://www.bart.gov/sites/default/files/docs/google_transit_20160328_v1.zip
+
+
+ - name: dk  # Denmark
+   feeds:
+
+     - name: rejseplanen
+       url: http://labs.rejseplanen.dk/files/GTFS/GTFS.zip
+
+
+ - name: es  # Spain
+   feeds:
+
+     - name: emt
+       url: https://servicios.emtmadrid.es:8443/gtfs/transitemt.zip
+
+
+ - name: ie  # Ireland
+   url: http://www.transportforireland.ie/transitData
+   feeds:
+
+      - name: aircoach
+        path: google_transit_aircoach.zip
+
+      - name: buseireann
+        path: google_transit_buseireann.zip
+
+      - name: dualway
+        path: google_transit_dualway.zip
+
+      - name: ferries
+        path: google_transit_ferries.zip
+
+      - name: sro
+        path: google_transit_sro.zip
+
+
+ - name: nl  # The Netherlands
+   feeds:
+
+      - name: ovapi
+        url: http://gtfs.ovapi.nl/nl/gtfs-nl.zip

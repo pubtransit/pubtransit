@@ -41,8 +41,8 @@ feed:
         path: google_transit_sro.zip
 
 
- - name: nl  # The Netherlands
-   feeds:
-
-      - name: ovapi
-        url: http://gtfs.ovapi.nl/nl/gtfs-nl.zip
+# - name: nl  # The Netherlands
+#   feeds:
+#
+#      - name: ovapi
+#        url: http://gtfs.ovapi.nl/nl/gtfs-nl.zip

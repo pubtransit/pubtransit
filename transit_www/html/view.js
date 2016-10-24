@@ -3,10 +3,7 @@ function View() {
     this.stopMarkers = [];
     this.model = new Model();
     this.presenter = new Presenter(this, this.model);
-    this.latitude = document.getElementById('latitude');
-    this.longitude = document.getElementById('longitude');
-    this.zoom = document.getElementById('zoom');
-    this.busWindow = null;
+    this.stopTimesWindow = null;
     this.pinIcons = null
 }
 
@@ -17,20 +14,6 @@ View.prototype.centerCurrentPosition = function() {
 View.prototype.centerPosition = function(position) {
     if (this.map) {
         this.map.setCenter(position);
-    }
-}
-
-View.prototype.updateCenter = function() {
-    if (this.map) {
-        var center = this.model.getCenter();
-        this.latitude.value = center.lat;
-        this.longitude.value = center.lng;
-    }
-}
-
-View.prototype.updateZoom = function() {
-    if (this.map) {
-        this.zoom.value = this.model.zoom;
     }
 }
 
@@ -69,11 +52,10 @@ View.prototype.initMap = function() {
     zoomChanged();
     this.map.addListener('zoom_changed', zoomChanged);
 
-    var busWindowClosed = function() {
+    this.stopTimesWindow = new google.maps.InfoWindow();
+    this.stopTimesWindow.addListener('closeclick', function() {
         self.presenter.setCurrentStop(null)
-    }
-    this.busWindow = new google.maps.InfoWindow();
-    this.busWindow.addListener('closeclick', busWindowClosed);
+    });
 
     view.centerCurrentPosition();
 }
@@ -105,9 +87,9 @@ View.prototype.removeMarkers = function() {
 
 View.prototype.updateCurrentStop = function() {
     var currentStop = this.model.getCurrentStop();
-    var win = this.busWindow;
+    var win = this.stopTimesWindow;
     if (currentStop && win) {
-        var busInfos = [
+        var stopTimesInfos = [
                 "<h3>" + currentStop.name + "</h3>",
                 "<table>",
                 "<tr>" + "<td><h4>Route</h4></td>"
@@ -138,8 +120,7 @@ View.prototype.updateCurrentStop = function() {
             if (remainingMinutes < 60.) {
                 var timeStamp = [remainingMinutes, "min."].join(" ")
             } else {
-                var timeStamp = [time.getHours(), time.getMinutes(),
-                        time.getSeconds()].join(':');
+                var timeStamp = this.getTimeStamp(time);
             }
 
             entries.push({
@@ -156,10 +137,10 @@ View.prototype.updateCurrentStop = function() {
             var row = "<tr>" + "<td><h5>" + entries[i].route + "</h5></td>"
                     + "<td>" + entries[i].trip + "</td>" + "<td><h5>"
                     + entries[i].timeStamp + "</h5></td>" + "<tr>";
-            busInfos.push(row);
+            stopTimesInfos.push(row);
         }
-        busInfos.push('</table>');
-        var newContent = busInfos.join('');
+        stopTimesInfos.push('</table>');
+        var newContent = stopTimesInfos.join('');
         var oldContent = win.getContent();
         if (newContent != oldContent) {
             win.setContent(newContent);
@@ -169,8 +150,22 @@ View.prototype.updateCurrentStop = function() {
     }
 }
 
-function closeBusesWindow() {
-    var win = this.busWindow;
+View.prototype.getTimeStamp = function(time) {
+    var intParts = [time.getHours(), time.getMinutes(),
+        time.getSeconds()];
+    var stringParts = [];
+    for (var i in intParts) {
+        part = "" + intParts[i];
+        while (part.length < 2) {
+            part = "0" + part;
+        }
+        stringParts.push(part);
+    }
+    return stringParts.join(':');
+}
+
+View.prototype.closeStopTimesWindow = function() {
+    var win = this.stopTimesWindow;
     if (win) {
         win.close();
     }

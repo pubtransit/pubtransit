@@ -41,8 +41,11 @@ Model.prototype.setZoom = function(zoom) {
 }
 
 Model.prototype.putStop = function(stop) {
-    if (!(stop.stopId in this.stops)) {
+    if (stop.stopId in this.stops) {
+        return false;
+    } else{
         this.stops[stop.stopId] = stop;
+        return true;
     }
 }
 

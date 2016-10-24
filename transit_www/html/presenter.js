@@ -37,7 +37,6 @@ Presenter.prototype.setBounds = function(bounds) {
                 }, 500.);
             }
         }
-        this.view.updateCenter();
     } else {
         log.debug("Same location.");
     }
@@ -49,7 +48,6 @@ Presenter.prototype.setZoom = function(zoom) {
     }
 
     this.model.setZoom(zoom);
-    this.view.updateZoom(zoom);
 }
 
 Presenter.prototype.requestStops = function() {
@@ -61,8 +59,9 @@ Presenter.prototype.requestStops = function() {
 Presenter.prototype.receiveStops = function(stops) {
     for ( var i in stops) {
         var stop = stops[i];
-        this.model.putStop(stop);
-        this.dropStopMarker(stop);
+        if(this.model.putStop(stop)) {
+            this.dropStopMarker(stop);
+        }
     }
 }
 

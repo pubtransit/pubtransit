@@ -234,7 +234,6 @@ FeedRequest.prototype.update = function() {
         }
     }
 
-    log.debug('Invoke callback function:', this.receiveFunc)
     this.done = true;
     this.receiveFunc(this.responses);
 }

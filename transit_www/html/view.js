@@ -170,6 +170,8 @@ View.prototype.updateCurrentStop = function() {
             win.setPosition(currentStop);
             win.open(this.map);
         }
+    } else {
+        this.closeStopTimesWindow();
     }
 }
 
@@ -191,4 +193,5 @@ View.prototype.closeStopTimesWindow = function() {
     if (win) {
         win.close();
     }
+    this.stopTimesContent = "";
 }

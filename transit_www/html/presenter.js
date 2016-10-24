@@ -44,9 +44,12 @@ Presenter.prototype.setBounds = function(bounds) {
 
 Presenter.prototype.setZoom = function(zoom) {
     if (zoom < this.MIN_ZOOM) {
-        this.view.removeMarkers()
+        this.view.closeStopTimesWindow();
+        this.view.removeMarkers();
+        this.setCurrentStop(null);
+    } else {
+        this.updateCurrentStop();
     }
-
     this.model.setZoom(zoom);
 }
 
@@ -59,9 +62,8 @@ Presenter.prototype.requestStops = function() {
 Presenter.prototype.receiveStops = function(stops) {
     for ( var i in stops) {
         var stop = stops[i];
-        if(this.model.putStop(stop)) {
-            this.dropStopMarker(stop);
-        }
+        this.model.putStop(stop);
+        this.dropStopMarker(stop);
     }
 }
 
@@ -82,8 +84,8 @@ Presenter.prototype.setCurrentStop = function(stopId) {
             this.feed.requestRoutes(stop);
             this.feed.requestTrips(stop);
             this.feed.requestStopTimes(stop);
-            this.updateCurrentStop();
         }
+        this.updateCurrentStop();
     }
 }
 

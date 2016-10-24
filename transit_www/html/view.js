@@ -99,6 +99,7 @@ View.prototype.updateCurrentStop = function() {
 
         var stopTimes = this.model.getCurrentStopTimes();
         var entries = []
+        var existingEntries = []
         for ( var i in stopTimes) {
             var stopTime = stopTimes[i];
             var trip = this.model.trips[stopTime.tripId];
@@ -124,21 +125,29 @@ View.prototype.updateCurrentStop = function() {
                 var timeStamp = this.getTimeStamp(time);
             }
 
-            entries.push({
-                route: route.name,
-                trip: trip.name,
-                timeStamp: timeStamp,
-                deltaTime: deltaTime,
-            });
+            var signature = [route.name, route.name, timeStamp].join('|');
+            if (!(signature in existingEntries)) {
+                // avoid duplicate entries
+                existingEntries[signature] = true;
+                entries.push({
+                    route: route.name,
+                    routeId: route.routeId,
+                    trip: trip.name,
+                    tripId: trip.tripId,
+                    timeStamp: timeStamp,
+                    deltaTime: deltaTime,
+                    signature: signature
+                });
+            }
         }
         entries = entries.sort(function(a, b) {
             var diff = a.deltaTime - b.deltaTime;
             if (!diff) {
-                diff = a.route.localeCompare(b.route);
+                diff = a.routeId - b.routeId;
                 if (!diff) {
-                    diff = a.trip.localeCompare(b.trip);
+                    diff = a.tripId - b.tripId;
                     if (!diff) {
-                        diff = a.timeStamp.localeCompare(b.timeStamp);
+                        diff = a.signature.localeCompare(b.signature);
                     }
                 }
             }
@@ -153,7 +162,7 @@ View.prototype.updateCurrentStop = function() {
         stopTimesInfos.push('</table>');
         var newInfo = stopTimesInfos.join('');
         var oldInfo = this.stopTimesContent;
-        if (newInfo.length !=  oldInfo.length) {
+        if (newInfo.length != oldInfo.length) {
             log.debug('Stop times content has changed:', [oldInfo.length,
                     newInfo.length]);
             this.stopTimesContent = newInfo;

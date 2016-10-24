@@ -4,6 +4,7 @@ function View() {
     this.model = new Model();
     this.presenter = new Presenter(this, this.model);
     this.stopTimesWindow = null;
+    this.stopTimesContent = "";
     this.pinIcons = null
 }
 
@@ -126,12 +127,22 @@ View.prototype.updateCurrentStop = function() {
             entries.push({
                 route: route.name,
                 trip: trip.name,
+                timeStamp: timeStamp,
                 deltaTime: deltaTime,
-                timeStamp: timeStamp
             });
         }
         entries = entries.sort(function(a, b) {
-            return a.deltaTime - b.deltaTime;
+            var diff = a.deltaTime - b.deltaTime;
+            if (!diff) {
+                diff = a.route.localeCompare(b.route);
+                if (!diff) {
+                    diff = a.trip.localeCompare(b.trip);
+                    if (!diff) {
+                        diff = a.timeStamp.localeCompare(b.timeStamp);
+                    }
+                }
+            }
+            return diff;
         });
         for ( var i in entries) {
             var row = "<tr>" + "<td><h5>" + entries[i].route + "</h5></td>"
@@ -140,10 +151,13 @@ View.prototype.updateCurrentStop = function() {
             stopTimesInfos.push(row);
         }
         stopTimesInfos.push('</table>');
-        var newContent = stopTimesInfos.join('');
-        var oldContent = win.getContent();
-        if (newContent != oldContent) {
-            win.setContent(newContent);
+        var newInfo = stopTimesInfos.join('');
+        var oldInfo = this.stopTimesContent;
+        if (newInfo.length !=  oldInfo.length) {
+            log.debug('Stop times content has changed:', [oldInfo.length,
+                    newInfo.length]);
+            this.stopTimesContent = newInfo;
+            win.setContent(newInfo);
             win.setPosition(currentStop);
             win.open(this.map);
         }
@@ -151,10 +165,9 @@ View.prototype.updateCurrentStop = function() {
 }
 
 View.prototype.getTimeStamp = function(time) {
-    var intParts = [time.getHours(), time.getMinutes(),
-        time.getSeconds()];
+    var intParts = [time.getHours(), time.getMinutes(), time.getSeconds()];
     var stringParts = [];
-    for (var i in intParts) {
+    for ( var i in intParts) {
         part = "" + intParts[i];
         while (part.length < 2) {
             part = "0" + part;

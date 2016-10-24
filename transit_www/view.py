@@ -37,7 +37,6 @@ class Application(object):
         # add the main HTML file with embedded javascripts
         app.add_url_rule(rule='/', view_func=self.get_html, methods=['GET'])
         for feed in self._model.iter_feeds():
-            LOG.debug('map feed: %r -> %r', feed.rule, feed.target_file)
             app.add_url_rule(
                 rule=feed.rule, endpoint=feed.endpoint,
                 view_func=feed.view_func, methods=['GET'])

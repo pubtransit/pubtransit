@@ -114,9 +114,9 @@ Presenter.prototype.receiveTrips = function(trips) {
 Presenter.prototype.updateCurrentStop = function() {
     this._updateCurrentStopUpdated = false; 
     if (!this._updateCurrentStopRequested) {
-        this._updateCurrentStopRequested = true;
-        this._updateCurrentStopUpdated = true;
         this.view.updateCurrentStop();
+        this._updateCurrentStopUpdated = true;
+        this._updateCurrentStopRequested = true;
         var self = this;
         window.setTimeout(function() {
             self._updateCurrentStopRequested = false;

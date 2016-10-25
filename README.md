@@ -41,6 +41,8 @@ If you have some problem with the web site please report a [new issue](https://g
 - [Vagrant](https://www.vagrantup.com/) Ruby script provided to create VBox
   virtual machine almost as identical to target Web site.
 
-## Know issues / missing feature
+## Know issues & missing feature
 - Remaining time computation doesn't care about time zones.
+- Doesn't read calendar table from feed files.
+- Stop times feed file building is slow for big GPRS files.
 - It doesn't provide any real time data, only scheduled departures times.

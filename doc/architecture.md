@@ -8,4 +8,4 @@ The public transit data is instead splitted in small compressed binary file (cal
 and made available via HTTP or HTTPS protocol. The Web browser is in charge of searching by parsing an index
 and download those files are required by the user.
 
-![Data Flow](doc/data-flow.svg)
+![Data Flow](https://cdn.rawgit.com/pubtransit/transit/master/doc/data-flow.svg)

@@ -1,11 +1,5 @@
 feed:
 
- - name: ca  # California
-   feeds:
-
-     - name: bart
-       url: http://www.bart.gov/sites/default/files/docs/google_transit_20160328_v1.zip
-
 
  - name: ch  # Switzerland
    url: http://gtfs.geops.ch/dl
@@ -59,10 +53,3 @@ feed:
 
       - name: sro
         path: google_transit_sro.zip
-
-
-# - name: nl  # The Netherlands
-#   feeds:
-#
-#      - name: ovapi
-#        url: http://gtfs.ovapi.nl/nl/gtfs-nl.zip

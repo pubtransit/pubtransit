@@ -77,26 +77,28 @@ FeedClient.prototype.receiveTiles = function(path, tiles, bounds) {
 FeedClient.prototype.requestTileStops = function(path, tileName) {
     log.debug("requestStopTiles:", path)
     var self = this;
-    this.from(path + '/' + tileName + '/stops').select(['lon', 'lat', 'name'])
-            .fetch(function(stops) {
-                self.receiveTileStops(stops, path, tileName);
-            });
+    this.from(path + '/' + tileName + '/stops').select(
+            ['lon', 'lat', 'name', 'empty']).fetch(function(stops) {
+        self.receiveTileStops(stops, path, tileName);
+    });
 }
 
 FeedClient.prototype.receiveTileStops = function(stops, path, tileName) {
     log.debug("receiveTileStops:", path)
     var outputStops = [];
     for ( var i in stops.name) {
-        outputStops.push({
-            stopId: path + '/' + tileName + '#' + i,
-            path: path,
-            tileName: tileName,
-            tileStopId: i,
-            lat: stops.lat[i],
-            lng: stops.lon[i],
-            name: stops.name[i],
-            times: {},
-        });
+        if (!stops.empty[i]) {
+            outputStops.push({
+                stopId: path + '/' + tileName + '#' + i,
+                path: path,
+                tileName: tileName,
+                tileStopId: i,
+                lat: stops.lat[i],
+                lng: stops.lon[i],
+                name: stops.name[i],
+                times: {},
+            });
+        }
     }
     this.handler.receiveStops(outputStops);
 }

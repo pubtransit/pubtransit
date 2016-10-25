@@ -110,18 +110,13 @@ Presenter.prototype.receiveTrips = function(trips) {
     this.updateCurrentStop();
 }
 
-Presenter.prototype.updateCurrentStop = function(routes) {
-    if (this.model.currentStop && !this._updateCurrentStopRequested) {
-        this._updateCurrentStopRequested = true;
+Presenter.prototype.updateCurrentStop = function() {
+    if (!this._updateCurrentStopRequested) {
         var self = this;
+        this._updateCurrentStopRequested = true;
         window.setTimeout(function() {
+            self.view.updateCurrentStop();
             self._updateCurrentStopRequested = false;
-            if (self.model.currentStop) {
-                self.view.updateCurrentStop();
-                self.updateCurrentStop();
-            }
         }, 1000);
-    } else {
-        this._updateCurrentStopRequested = false;
     }
 }

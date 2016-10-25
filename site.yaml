@@ -31,7 +31,7 @@ feed:
    feeds:
 
      - name: rejseplanen
-       url: https://transitfeeds-data.s3-us-west-1.amazonaws.com/public/feeds/rejseplanen/705/20161003/gtfs.zip
+       url: http://labs.rejseplanen.dk/files/GTFS/GTFS.zip
 
 
  - name: es  # Spain

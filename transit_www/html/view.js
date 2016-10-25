@@ -154,7 +154,7 @@ View.prototype.updateCurrentStop = function() {
         stopTimesInfos.push('</table>');
         var newInfo = stopTimesInfos.join('');
         var oldInfo = this.stopTimesContent;
-        if (newInfo.length != oldInfo.length) {
+        if (!oldInfo || newInfo.length != oldInfo.length || newInfo != oldInfo) {
             log.debug('Stop times content has changed:', [oldInfo.length,
                     newInfo.length]);
             this.stopTimesContent = newInfo;

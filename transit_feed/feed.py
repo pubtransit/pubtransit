@@ -303,6 +303,10 @@ def generate_tiled_stop_times(dest_dir, stop_times, trip_id, tiles):
             tiled_stop_times.departure_minutes, tile_dir, 'stop_times',
             'departure_minutes')
 
+        stop_empty = numpy.ones_like(stop_id, dtype=int)
+        stop_empty[tiled_stop_times_stop_id] = 0
+        store_column(stop_empty, tile_dir, 'stops', 'empty')
+
 
 def timestamp_to_minutes(timestamp):
     timestamp = numpy.asarray(timestamp, dtype='S8')

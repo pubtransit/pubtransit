@@ -9,3 +9,4 @@ If you have some problem with the web site please report a [new issue](https://g
 
 ## Documentation
 - [Setup Guide](doc/setup.md)
+- [System Achitecture Design](doc/architecture.md)

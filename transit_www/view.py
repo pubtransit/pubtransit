@@ -36,6 +36,8 @@ class Application(object):
 
         # add the main HTML file with embedded javascripts
         app.add_url_rule(rule='/', view_func=self.get_html, methods=['GET'])
+        app.add_url_rule(rule='/greenpin.png', view_func=self.get_greenpin,
+                         methods=['GET'])
         for feed in self._model.iter_feeds():
             app.add_url_rule(
                 rule=feed.rule, endpoint=feed.endpoint,
@@ -56,3 +58,7 @@ class Application(object):
         gmak = random.choice(model.google_api_keys)
         return model.get_text_file(
             self.HTML_TEMPLATE, scripts='\n'.join(scripts), gmak=gmak)
+
+    def get_greenpin(self):
+        """It produce the Web application HTML."""
+        return self._model.get_data_file('greenpin.png')

@@ -1,2 +1,2 @@
 [www.pubtransit.org]
-host1.pubtransit.org ansible_ssh_user=ubuntu
+node01.pubtransit.org ansible_ssh_user=ubuntu

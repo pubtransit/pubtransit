@@ -9,7 +9,7 @@ include transit_www/www.mk
 include transit_feed/feed.mk
 
 deploy:
-	ansible-playbook provision.yml
+	ansible-playbook provision.yaml
 
 clean:
 	rm -fR $(BUILD_DIR)

@@ -39,7 +39,7 @@
   - name: Set host name
     become: true
     become_user: root
-    hostname: name=www.pubtransit.org
+    hostname: name=node01.pubtransit.org
 
   - name: Fix proxy environment
     become: true

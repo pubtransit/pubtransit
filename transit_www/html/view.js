@@ -5,7 +5,7 @@ function View() {
     this.presenter = new Presenter(this, this.model);
     this.stopTimesWindow = null;
     this.stopTimesContent = "";
-    this.pinIcons = null
+    this.pinIcon = null
 }
 
 View.prototype.centerCurrentPosition = function() {
@@ -24,17 +24,9 @@ View.prototype.initMap = function() {
         zoom: 16
     });
 
-    this.pinIcons = {
-        transit: new google.maps.MarkerImage(
-                "http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|"
-                        + "FE7569", new google.maps.Size(21, 34),
-                new google.maps.Point(0, 0), new google.maps.Point(10, 34)),
-
-        feed: new google.maps.MarkerImage(
-                "http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|"
-                        + "75FE69", new google.maps.Size(21, 34),
-                new google.maps.Point(0, 0), new google.maps.Point(10, 34)),
-    }
+    this.pinIcon = new google.maps.MarkerImage("greenpin.png",
+            new google.maps.Size(21, 34), new google.maps.Point(0, 0),
+            new google.maps.Point(10, 34));
 
     var self = this;
 
@@ -69,7 +61,7 @@ View.prototype.dropStopMarker = function(stop) {
             position: this.model.stops[stop.stopId],
             map: view.map,
             animation: google.maps.Animation.DROP,
-            icon: this.pinIcons['feed'],
+            icon: this.pinIcon,
         });
         var self = this;
         marker.addListener('click', function() {

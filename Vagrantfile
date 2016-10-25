@@ -86,7 +86,7 @@ Vagrant.configure(2) do |config|
 
   # Run ansible playbook
   config.vm.provision "ansible" do |ansible|
-    ansible.playbook = "provision.yml"
+    ansible.playbook = "provision.yaml"
     ansible.limit = "all"
   end
 

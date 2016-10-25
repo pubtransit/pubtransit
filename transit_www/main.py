@@ -36,3 +36,6 @@ def main(args=None):
 
     elif cmd == 'get-html':
         out.write(application.get_html())
+
+    elif cmd == 'get-greenpin':
+        out.write(application.get_greenpin())

@@ -63,6 +63,14 @@ class Model(object):
             template_name = os.path.relpath(file_name, base_dir)
             yield self.get_text_file(template_name, **variables)
 
+    def get_data_file(self, file_name):
+        """It lads a template, replace veriables and return resulting file."""
+        base_dir = os.path.join(os.path.dirname(transit_www.__file__), 'html')
+        parts = tuple(file_name.split('/'))
+        full_name = os.path.join(base_dir, *parts)
+        with open(full_name, "rb") as stream:
+            return stream.read()
+
     def iter_feeds(self):
         target_dir = self._conf['feed'][0]['dir']
         rule_dir = self._conf['feed'][0]['url']

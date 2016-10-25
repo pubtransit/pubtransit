@@ -2,7 +2,7 @@
 
 ## Data Flow Overview
 
-<img src="https://cdn.rawgit.com/pubtransit/transit/b6e69741bd31762391f199eada34daa1d36fafae/doc/data-flow.svg" width="50%" align="right">
+<img src="https://cdn.rawgit.com/pubtransit/transit/b6e69741bd31762391f199eada34daa1d36fafae/doc/data-flow.svg" width="50%" align="left">
 
 The System Architecture is very simple: the Web page is static and doesn't
 rely on any running appliance. This approach was decided to maximize the site
@@ -21,7 +21,7 @@ Public [GPRS files](https://developers.google.com/transit/gtfs/) are dawnloaded
 from public web sites and then they are eaten by the feed builder implemented
 by transit_feed Python package.
 
-<img src="https://cdn.rawgit.com/pubtransit/transit/a17de82243ca018844837265a49c6be9ff826a44/doc/feeds-building.svg" width="50%" align="left">
+<img src="https://cdn.rawgit.com/pubtransit/transit/a17de82243ca018844837265a49c6be9ff826a44/doc/feeds-building.svg" width="50%" align="right">
 
 GPRS files are zip files containing some CSV file. Every CSV is a relational
 table. transit_feed package makes uses of [Pandas](http://pandas.pydata.org/)

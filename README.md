@@ -8,4 +8,4 @@ All the code used to deploy the web page and the HTML/Javascript are hosted here
 If you have some problem with the web site please report a [new issue](https://github.com/pubtransit/transit/issues/new).
 
 ## Documentation
-- [System Administrator Guide](doc/administrator.md)
+- [Setup Guide](doc/setup.md)

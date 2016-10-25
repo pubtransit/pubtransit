@@ -1,4 +1,4 @@
-# System administration guide
+# Setup Guide
 
 ## Get the code
 
@@ -18,13 +18,13 @@ cd transit
 ### Edit site.yaml
 
 Before starting building the feeds you have to edit [site.yaml](site.yaml)
-configuration file to specify which feeds to download and deploy on the web page.
+configuration file to specify which feeds to download and deploy on the Web page.
 The YAML file allows you to specify the location of public
 [GTFS](https://developers.google.com/transit/gtfs/)
 [Zip](https://en.wikipedia.org/wiki/Zip_(file_format)) files to download.
 As the site at the moment supports only static data (non-real time
 pre-scheduled scheduled trips), only the URL of one Zip file is required.
-The YAML file comes pre-configured like the web site is. You can edit it by
+The YAML file comes pre-configured like the Web site is. You can edit it by
 making sure you keep its schema as show like here:
 
 ```yaml
@@ -100,9 +100,10 @@ make
 
 ## Deploing web page to your server 
 
-To host the Web site it requires a vanilla installation of Apache without
-requiring to run any appliance. The transit data store is hosted on the web
-site as a structure of binary compressed files made accessible to the Web
+To host the Web site it requires a
+[vanilla](https://en.wikipedia.org/wiki/Vanilla_software) installation of Apache
+without requiring to run any appliance. The transit data store is hosted on the
+Web site as a structure of binary compressed files made accessible to the Web
 browser by the HTTP server. The Web browser has to download the files
 containing required informations on demand and cache them for next use.
 
@@ -112,7 +113,7 @@ does please have a look to the [Ansible configuration file](provision.yaml).
 To understand listed operations and modify them you can read
 [Ansible documentation](http://docs.ansible.com/).
 
-To specify the direction of the web server(s) edit Ansible
+To specify the direction of the Web server(s) edit Ansible
 [hosts](provision/hosts) configuration file.
 
 ### Prepare administrator machine
@@ -127,7 +128,7 @@ or if you wont to install Ansible for all users:
 sudo pip install ansible
 ```
 
-### Prepare web site target machine
+### Prepare Web site target machine
 
 On the target server you have to install Python to allow Ansible to configure
 it.

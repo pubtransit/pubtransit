@@ -7,11 +7,32 @@ feed:
        url: http://www.bart.gov/sites/default/files/docs/google_transit_20160328_v1.zip
 
 
+ - name: ch  # Switzerland
+   url: http://gtfs.geops.ch/dl
+   feeds:
+
+     - name: bus
+       path: gtfs_bus.zip
+
+     - name: train
+       path: gtfs_bus.zip
+
+     - name: tram
+       path: gtfs_tram.zip
+
+     - name: ferries
+       path: gtfs_ferry.zip
+
+     - name: gondola
+       path: gtfs_gondola.zip
+
+
  - name: dk  # Denmark
    feeds:
 
      - name: rejseplanen
        url: https://transitfeeds-data.s3-us-west-1.amazonaws.com/public/feeds/rejseplanen/705/20161003/gtfs.zip
+
 
  - name: es  # Spain
    feeds:

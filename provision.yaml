@@ -47,7 +47,7 @@
     script: provision/get_proxy_env.py /etc/profile.d/proxy.sh
 
   - name: Deploy transit source files
-    synchronize: src=. dest=/home/ubuntu
+    synchronize: src=. dest=/home/ubuntu delete=yes
 
   - name: Intall transit python requirements
     become: true

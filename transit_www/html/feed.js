@@ -39,7 +39,7 @@ FeedClient.prototype.receiveTiles = function(path, tiles, bounds) {
             bounds.north);
     while (stack.length > 0) {
         var node = stack.pop();
-        if (node.leaf) {
+        if (Number.isInteger(node.leaf)) {
             // Leaf node
             if (tiles.west[node.leaf] <= bounds.east
                     && tiles.east[node.leaf] >= bounds.west

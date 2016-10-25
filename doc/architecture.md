@@ -2,7 +2,7 @@
 
 ## Data Flow Overview
 
-<img src="https://cdn.rawgit.com/pubtransit/transit/b6e69741bd31762391f199eada34daa1d36fafae/doc/data-flow.svg" width="50%" align="left">
+<img src="https://cdn.rawgit.com/pubtransit/transit/b6e69741bd31762391f199eada34daa1d36fafae/doc/data-flow.svg" width="40%" align="left">
 
 The System Architecture is very simple: the Web page is static and doesn't
 rely on any running appliance. This approach was decided to maximize the site

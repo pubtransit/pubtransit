@@ -15,7 +15,7 @@ feed:
        path: gtfs_bus.zip
 
      - name: train
-       path: gtfs_bus.zip
+       path: gtfs_train.zip
 
      - name: tram
        path: gtfs_tram.zip

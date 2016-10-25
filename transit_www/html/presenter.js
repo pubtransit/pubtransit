@@ -4,6 +4,7 @@ function Presenter(view, model) {
     this.feed = new FeedClient(model.feed, hanlder = this);
     this._stopRequested = false;
     this._updateCurrentStopRequested = false;
+    this._updateCurrentStopUpdated = false;
     this.MIN_ZOOM = 15;
 }
 
@@ -111,12 +112,17 @@ Presenter.prototype.receiveTrips = function(trips) {
 }
 
 Presenter.prototype.updateCurrentStop = function() {
+    this._updateCurrentStopUpdated = false; 
     if (!this._updateCurrentStopRequested) {
-        var self = this;
         this._updateCurrentStopRequested = true;
+        this._updateCurrentStopUpdated = true;
+        this.view.updateCurrentStop();
+        var self = this;
         window.setTimeout(function() {
-            self.view.updateCurrentStop();
             self._updateCurrentStopRequested = false;
-        }, 1000);
+            if (!self._updateCurrentStopUpdated) {
+                self.updateCurrentStop();
+            }
+        }, 200);
     }
 }

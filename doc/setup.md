@@ -1,4 +1,4 @@
-# System administration guide
+# Setup Guide
 
 ## Get the code
 

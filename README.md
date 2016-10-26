@@ -10,8 +10,9 @@ here.
 If you have some problem with the web site please report a [new issue](https://github.com/pubtransit/transit/issues/new).
 
 ## Documentation
-- [System Achitecture Design](doc/architecture.md)
 - [Setup Guide](doc/setup.md)
+- [Backend System Achitecture Design](doc/backend-architecture.md)
+- [Frontend System Achitecture Design](doc/frontend-architecture.md)
 
 ## Features
 

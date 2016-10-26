@@ -28,7 +28,11 @@ from public web sites and then they are eaten by the feed builder implemented
 by [transit_feed.feed](https://github.com/pubtransit/transit/blob/master/transit_feed/feed.py)
 Python module.
 
-<img src="https://cdn.rawgit.com/pubtransit/transit/a17de82243ca018844837265a49c6be9ff826a44/doc/feeds-building.svg" width="50%" align="right">
+In directory [transit_feed/tests/sample-feed](transit_feed/tests/sample-feed)
+you can fin an example of the contend of a
+[GPRS Zip file](https://en.wikipedia.org/wiki/General_Transit_Feed_Specification).
+
+<img src="https://cdn.rawgit.com/pubtransit/transit/a17de82243ca018844837265a49c6be9ff826a44/doc/feeds-building.svg" width="60%" align="right">
 
 GPRS files are zip files containing some CSV file. Every CSV is a relational
 table. transit_feed package makes uses of [Pandas](http://pandas.pydata.org/)
@@ -124,3 +128,53 @@ feed/
         ... # the file tree for given tile.
 ```
 
+## Inner feed file tree
+
+Every tile is a group of stops enclosed inside the same rectangle. Because they
+are produced as leafs of a KD-Tree there are any intersection between tiles. This
+avoid data replication.
+
+The internal content of a tile is stored inside a file tree like below.
+```
+feed/
+  <feed-group-name>/  # a name of feed group
+    <feed-name>/      # a name of feed
+      <tile-name>/    # The name of a tile is obtained by the integer value of its
+                      # integer index
+        stops/
+          empty.gz    # array of integers used to specify if a stop is
+                      # connected to any trip
+          lat.gz      # array of floats specifying stops latitude 
+          lon.gz      # array of floats specifying stops longitude
+          name.gz     # the name of a stop
+```
+
+## KD-Tree node object
+
+The [KD-Tree](https://en.wikipedia.org/wiki/K-d_tree) nodes are JSON like
+objects cotaining following fields:
+- col: {"lat"|"lon"} string value specifying if the split axis
+       is along latitude or longitude  
+- min: floating point value specifying the minimum longiture or latitude
+- mid: floating point value specifying the split axis longiture or latitude
+- max: floating point value specifying the maximum axis longiture or latitude
+- left: KD-Tree child node object
+- right: KD-Tree child node object
+- leaf: an integer value that identifying a tile.
+
+## Binary feed files format
+
+Binary feed files .gz are packed using
+[msgpack-python](https://pypi.python.org/pypi/msgpack-python) Python library and then
+compressed using [zlib](https://docs.python.org/2/library/zlib.html).
+
+They can contain everthing could be stored inside a JSON object file. In most of the
+cases are used to store flat uniform arrays of integers, floats or strings.
+These could represent a column of a table named after array file folder.
+
+```
+feed/
+  <...some other dirs>/
+    <table-name>/
+      <column-array-name>.gz
+```

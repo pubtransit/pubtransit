@@ -18,9 +18,15 @@ those files are required by the user.
 
 ## Feed files builder
 
+The Python builder scripts are all included into
+[transit_feed package](../transit_feed).
+The script is designed to be used from inside the main project
+[Makefile](../Makefile) by implementing specified [make goals](../transit_feed/feed.mk).
+
 Public [GPRS files](https://developers.google.com/transit/gtfs/) are dawnloaded
 from public web sites and then they are eaten by the feed builder implemented
-by transit_feed Python package.
+by [transit_feed.feed](https://github.com/pubtransit/transit/blob/master/transit_feed/feed.py)
+Python module.
 
 <img src="https://cdn.rawgit.com/pubtransit/transit/a17de82243ca018844837265a49c6be9ff826a44/doc/feeds-building.svg" width="50%" align="right">
 
@@ -42,3 +48,82 @@ a rectangular region in the earth, each including data of up to 128 stops.
 A [KD-Tree](https://en.wikipedia.org/wiki/K-d_tree) structure is saved
 separately to allow the Web browser to look for the files required for the
 region the zone is interested in.
+
+## Outer feed file tree
+
+GTFS files are used to generate feed files inside a local folder called build
+folder (the build/feed folder from the project root). During deployment operation
+this folder is going to be copied and mounted on the web server as 
+https://www.opentransit.org/feed/
+
+Therefore the structure and the content of this directory is the actual REST API
+expose to to the web Browser.
+
+Below how the directory tree should look like:
+
+```
+feed/
+  index/      # The Index column array table
+    path.gz   # Array of strings with all knwon
+              # <feed_group_name>/<feed_name> entries.
+    west.gz   # Array of floats with minimum longitude
+              # of all stops of given feed entries
+    east.gz   # Array of floats with maximum longitude
+              # of all stops of given feed entries
+    south.gz  # Array of floats with minimum latitude
+              # of all stops of given feed entries
+    north.gz  # Array of floats with maximum latitude
+              # of all stops of given feed entries
+
+  <feed-group-name>/  # a name of feed group
+    <feed-name>/      # a name of feed
+        ...  # the file tree for given feed
+```
+
+This directory structure reflects the [site.yaml](../site.yaml) file used to
+configure building script.
+
+```yaml
+feed:
+
+
+ - name: <feed-group-name>
+   url: <root-url-for-given-group>   # Relative path option
+   feeds:
+
+     - name: <feed-name>
+       path: <relative-GTFS-endpoint-path>.zip  # Relative path option
+
+     - name: <feed-name>
+       url: <absolute-GTFS-url>.zip  # Absolute URL option
+```
+
+## Mid feed file tree
+
+For every GTFS zip configured in the site.yaml file, the builder script is going to
+generate a file tree like this:
+
+```
+feed/
+  <feed-group-name>/  # a name of feed group
+    <feed-name>/      # a name of feed
+      routes/         # Routes column array table
+        name.gz       # Array of string with the names of the all routes
+      trips/          # Trips column array table
+        name.gz       # Array of string with the names of the all trips
+        route_id.gz   # Array of integer indexes pointing to a row of routes table
+      tiles/          # Tiles column array table. A tile is a rectangular group of stops
+        west.gz       # Array of floats with minimum longitude
+                      # of all stops of given tile
+        east.gz       # Array of floats with maximum longitude
+                      # of all stops of given tile
+        south.gz      # Array of floats with minimum latitude
+                      # of all stops of given tile
+        north.gz      # Array of floats with maximum latitude
+                      # of all stops of given feed entries
+        tree.gz       # An tree node object with reference to tile ids as leafs
+      <tile-name>/    # The name of a tile is obtained by the integer value of its
+                      # integer index
+        ... # the file tree for given tile.
+```
+

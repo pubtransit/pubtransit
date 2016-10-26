@@ -85,12 +85,9 @@ configure building script.
 
 ```yaml
 feed:
-
-
  - name: <feed-group-name>
    url: <root-url-for-given-group>   # Relative path option
    feeds:
-
      - name: <feed-name>
        path: <relative-GTFS-endpoint-path>.zip  # Relative path option
 

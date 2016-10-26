@@ -54,7 +54,7 @@ region the zone is interested in.
 GTFS files are used to generate feed files inside a local folder called build
 folder (the build/feed folder from the project root). During deployment operation
 this folder is going to be copied and mounted on the web server as 
-https://www.opentransit.org/feed/
+https://www.pubtransit.org/feed/
 
 Therefore the structure and the content of this directory is the actual REST API
 expose to to the web Browser.

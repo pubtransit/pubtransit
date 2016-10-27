@@ -3,9 +3,10 @@ python:
     - 2.7
 
 install:
-    - pip install -U pip tox setuptools 
+    - pip install -U pip tox setuptools coveralls
 
 script:
     - tox
+    - coveralls --rcfile=.coveragerc
 
 sudo: false

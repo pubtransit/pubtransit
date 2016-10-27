@@ -2,7 +2,7 @@
 
 ## Data Flow Overview
 
-<img src="https://cdn.rawgit.com/pubtransit/transit/d9674e671d73312fea1dbfe520456741c919077c/doc/frontend-data-flow.svg" width="40%" align="left">
+<img src="https://cdn.rawgit.com/pubtransit/transit/d9674e671d73312fea1dbfe520456741c919077c/doc/frontend-data-flow.svg" width="60%" align="left">
 
 The frontend side is a javascript based web page. It uses
 [geo-localization browser API](https://developer.mozilla.org/en-US/docs/Web/API/Geolocation/Using_geolocation)

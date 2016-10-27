@@ -1,4 +1,4 @@
-# Backend System Architecture Design
+# Back-end System Architecture Design
 
 ## Data Flow Overview
 
@@ -8,7 +8,7 @@ The System Architecture is very simple: the Web page is static and doesn't
 rely on any running appliance. This approach was decided to maximize the site
 scalability and simplicity. There is no dynamic data.
 
-The public transit data (downloaded as
+The public transit data (download as
 [GPRS files](https://developers.google.com/transit/gtfs/) .zip files) is
 instead split in small compressed binary .gz files (called here feed files)
 and made available via HTTP or HTTPS protocol.
@@ -23,7 +23,7 @@ The Python builder scripts are all included into
 The script is designed to be used from inside the main project
 [Makefile](../Makefile) by implementing specified [make goals](../transit_feed/feed.mk).
 
-Public [GPRS files](https://developers.google.com/transit/gtfs/) are dawnloaded
+Public [GPRS files](https://developers.google.com/transit/gtfs/) are download
 from public web sites and then they are eaten by the feed builder implemented
 by [transit_feed.feed](https://github.com/pubtransit/transit/blob/master/transit_feed/feed.py)
 Python module.
@@ -32,7 +32,8 @@ In directory [transit_feed/tests/sample-feed](transit_feed/tests/sample-feed)
 you can fin an example of the contend of a
 [GPRS Zip file](https://en.wikipedia.org/wiki/General_Transit_Feed_Specification).
 
-<img src="https://cdn.rawgit.com/pubtransit/transit/a17de82243ca018844837265a49c6be9ff826a44/doc/feeds-building.svg" width="60%" align="right">
+<img src="https://cdn.rawgit.com/pubtransit/transit/a17de82243ca018844837265a49c6be9ff826a44/doc/feeds-building.svg"
+width="60%" align="right">
 
 GPRS files are zip files containing some CSV file. Every CSV is a relational
 table. transit_feed package makes uses of [Pandas](http://pandas.pydata.org/)
@@ -56,8 +57,8 @@ region the zone is interested in.
 ## Outer feed file tree
 
 GTFS files are used to generate feed files inside a local folder called build
-folder (the build/feed folder from the project root). During deployment operation
-this folder is going to be copied and mounted on the web server as 
+folder (the build/feed folder from the project root). During deployment
+operation this folder is going to be copied and mounted on the web server as
 https://www.pubtransit.org/feed/
 
 Therefore the structure and the content of this directory is the actual REST API
@@ -68,7 +69,7 @@ Below how the directory tree should look like:
 ```
 feed/
   index/      # The Index column array table
-    path.gz   # Array of strings with all knwon
+    path.gz   # Array of strings with all known
               # <feed_group_name>/<feed_name> entries.
     west.gz   # Array of floats with minimum longitude
               # of all stops of given feed entries
@@ -101,8 +102,8 @@ feed:
 
 ## Mid feed file tree
 
-For every GTFS zip configured in the site.yaml file, the builder script is going to
-generate a file tree like this:
+For every GTFS zip configured in the site.yaml file, the builder script is
+going to generate a file tree like this:
 
 ```
 feed/
@@ -112,8 +113,10 @@ feed/
         name.gz       # Array of string with the names of the all routes
       trips/          # Trips column array table
         name.gz       # Array of string with the names of the all trips
-        route_id.gz   # Array of integer indexes pointing to a row of routes table
-      tiles/          # Tiles column array table. A tile is a rectangular group of stops
+        route_id.gz   # Array of integer indexes pointing to a row of routes
+                      # table
+      tiles/          # Tiles column array table. A tile is a rectangular group
+                      # of stops
         west.gz       # Array of floats with minimum longitude
                       # of all stops of given tile
         east.gz       # Array of floats with maximum longitude
@@ -122,9 +125,10 @@ feed/
                       # of all stops of given tile
         north.gz      # Array of floats with maximum latitude
                       # of all stops of given feed entries
-        tree.gz       # An tree node object with reference to tile ids as leafs
-      <tile-name>/    # The name of a tile is obtained by the integer value of its
-                      # integer index
+        tree.gz       # An tree node object with reference to tile identifiers
+                      # as leaves
+      <tile-name>/    # The name of a tile is obtained by the integer value of
+                      # its integer index
         ... # the file tree for given tile.
 ```
 
@@ -155,9 +159,9 @@ The [KD-Tree](https://en.wikipedia.org/wiki/K-d_tree) nodes are JSON like
 objects cotaining following fields:
 - col: {"lat"|"lon"} string value specifying if the split axis
        is along latitude or longitude  
-- min: floating point value specifying the minimum longiture or latitude
-- mid: floating point value specifying the split axis longiture or latitude
-- max: floating point value specifying the maximum axis longiture or latitude
+- min: floating point value specifying the minimum longitude or latitude
+- mid: floating point value specifying the split axis longitude or latitude
+- max: floating point value specifying the maximum axis longitude or latitude
 - left: KD-Tree child node object
 - right: KD-Tree child node object
 - leaf: an integer value that identifying a tile.
@@ -165,12 +169,13 @@ objects cotaining following fields:
 ## Binary feed files format
 
 Binary feed files .gz are packed using
-[msgpack-python](https://pypi.python.org/pypi/msgpack-python) Python library and then
-compressed using [zlib](https://docs.python.org/2/library/zlib.html).
+[msgpack-python](https://pypi.python.org/pypi/msgpack-python) Python library
+and then compressed using [zlib](https://docs.python.org/2/library/zlib.html).
 
-They can contain everthing could be stored inside a JSON object file. In most of the
-cases are used to store flat uniform arrays of integers, floats or strings.
-These could represent a column of a table named after array file folder.
+They can contain everything could be stored inside a JSON object file.
+On the most of the cases are used to store flat uniform arrays of integers,
+floats or strings. These could represent a column of a table named after array
+file folder.
 
 ```
 feed/

@@ -33,9 +33,8 @@ feed:
 - name: ch  # Entry group for Switzerland
    url: http://gtfs.geops.ch/dl
    feeds:
-
      - name: bus
-       path: gtfs_bus.zip  # path relative to the url of the same group
+       path: gtfs_bus.zip  # path relative to the URL of the same group
 
      - name: train
        path: gtfs_train.zip
@@ -53,7 +52,7 @@ feed:
    feeds:
 
      - name: rejseplanen
-       url: http://labs.rejseplanen.dk/files/GTFS/GTFS.zip  # absoulute path
+       url: http://labs.rejseplanen.dk/files/GTFS/GTFS.zip  # absolute path
 ```
 
 AS you can see every entry (like ch/bus, ch/train, ...) is specified under a

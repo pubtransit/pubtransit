@@ -172,8 +172,12 @@ def generate_datastores(args, feed_file):
         routes = read_routes(zip_file)
         generate_routes(dest_dir=dest_dir, routes=routes)
 
+        calendar = read_calendar(zip_file)
+        generate_calendar(dest_dir=dest_dir, calendar=calendar)
+
         trips = read_trips(zip_file)
-        generate_trips(dest_dir=dest_dir, trips=trips, route_id=routes.id)
+        generate_trips(
+            dest_dir=dest_dir, trips=trips, route_id=calendar.service_id)
 
         stops = read_stops(zip_file)
         tiles = generate_tiled_stops(
@@ -226,6 +230,17 @@ def make_index(args, feed_file=None):
 
 def generate_routes(dest_dir, routes):
     store_column(routes.name, dest_dir, 'routes', 'name')
+
+
+def generate_calendar(dest_dir, calendar):
+    week_days = numpy.zeros_like(calendar.monday, dtype=int)
+    for day_id, column_name in enumerate(
+            ['monday', 'tuesday', 'wednesday', 'thursday', 'friday',
+             'saturday', 'sunday']):
+
+        week_day = getattr(calendar, column_name).astype(int)
+        week_days |= (week_day << day_id)
+    store_column(week_days, dest_dir, 'calendar', 'week_days')
 
 
 def generate_trips(dest_dir, trips, route_id):
@@ -407,6 +422,22 @@ class RouteTable(BaseTable):
 read_routes = RouteTable.from_zip_file  # pylint: disable=invalid-name
 
 
+@named_tuple('service_id', 'route_id', 'name')
+class Calendar(BaseTable):
+
+    @classmethod
+    def from_zip_file(cls, zip_file):
+        columns = read_table(
+            zip_file=zip_file, table_name='calendar',
+            columns=['service_id', 'monday', 'tuesday', 'wednesday',
+                     'thursday', 'friday', 'saturday', 'sunday',
+                     'start_date', 'end_date'])
+        return cls(*columns).sort_by('service_id')
+
+
+read_calendar = Calendar.from_zip_file  # pylint: disable=invalid-name
+
+
 @named_tuple('id', 'route_id', 'name')
 class TripTable(BaseTable):
 
@@ -414,7 +445,7 @@ class TripTable(BaseTable):
     def from_zip_file(cls, zip_file):
         columns = read_table(
             zip_file=zip_file, table_name='trips',
-            columns=['trip_id', 'route_id', 'trip_headsign'])
+            columns=['trip_id', 'route_id', 'trip_headsign', 'service_id'])
         return cls(*columns).sort_by('id')
 
 

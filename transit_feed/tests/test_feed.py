@@ -43,7 +43,7 @@ class TestMake(unittest.TestCase):
         # then
         self.assert_array_equal(
             routes.name,
-            self.read_column(dest_dir, 'routes.name.gz'))
+            self.read_column(dest_dir, 'routes', 'name.gz'))
 
     def test_genetarte_trips(self):
         # given
@@ -58,11 +58,11 @@ class TestMake(unittest.TestCase):
         # then
         self.assert_array_equal(
             trips.name,
-            self.read_column(dest_dir, 'trips.name.gz', dtype=object))
+            self.read_column(dest_dir, 'trips', 'name.gz', dtype=object))
 
         self.assert_array_equal(
             trips.route_id,
-            routes.id[self.read_column(dest_dir, 'trips.route_id.gz')])
+            routes.id[self.read_column(dest_dir, 'trips', 'route_id.gz')])
 
     def test_generate_stops(self):
         # given
@@ -75,19 +75,12 @@ class TestMake(unittest.TestCase):
 
         # then
         self.assert_array_equal([stops.id], [tile.id for tile in tiles])
-        self.assertEqual(
-            [(dest_dir, [],
-              ['stop_tiles.east.gz', 'stop_tiles.north.gz',
-               'stop_tiles.south.gz', 'stop_tiles.tree.gz',
-               'stop_tiles.west.gz', 'stops.lat0.gz', 'stops.lon0.gz',
-               'stops.name0.gz'])],
-            list(os.walk(dest_dir)))
         self.assert_array_almost_equal(
-            stops.lon, self.read_column(dest_dir, 'stops.lon0.gz'))
+            stops.lon, self.read_column(dest_dir, '0', 'stops', 'lon.gz'))
         self.assert_array_almost_equal(
-            stops.lat, self.read_column(dest_dir, 'stops.lat0.gz'))
+            stops.lat, self.read_column(dest_dir, '0', 'stops', 'lat.gz'))
         self.assert_array_equal(
-            stops.name, self.read_column(dest_dir, 'stops.name0.gz'))
+            stops.name, self.read_column(dest_dir, '0', 'stops', 'name.gz'))
 
     def test_generate_tiled_stops(self):
         # given
@@ -130,8 +123,8 @@ class TestMake(unittest.TestCase):
             self.plot_dots(stops.lon, stops.lat)
             for i in range(len(tiles)):
                 self.plot_dots(
-                    self.read_column(dest_dir, 'stops.lon' + str(i) + '.gz'),
-                    self.read_column(dest_dir, 'stops.lat' + str(i) + '.gz'))
+                    self.read_column(dest_dir, 'stops', str(i), 'lon.gz'),
+                    self.read_column(dest_dir, 'stops', str(i), 'lat.gz'))
             self.show_plot()
             raise
 
@@ -148,10 +141,12 @@ class TestMake(unittest.TestCase):
 
         generate_tiled_stop_times(
             dest_dir=dest_dir, stop_times=stop_times, trip_id=trips.id,
-            stops_id=stops.id, tiles=tiles)
+            tiles=tiles)
 
-    def read_column(self, table_dir, name, dtype=None):
-        with open(os.path.join(table_dir, name), 'r') as column_file:
+    def read_column(self, *path, **kwargs):
+        dtype = kwargs.pop('dtype', None)
+        assert not kwargs
+        with open(os.path.join(*path), 'r') as column_file:
             packed = zlib.decompress(column_file.read())
             return numpy.asarray(msgpack.loads(packed), dtype=dtype)
 

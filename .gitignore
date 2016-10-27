@@ -97,3 +97,5 @@ ENV/
 AUTHORS
 ChangeLog
 /provision.retry
+
+/report/

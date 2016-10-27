@@ -11,6 +11,7 @@ import json
 import logging
 import os
 import re
+import shutil
 import sys
 import zipfile
 import zlib
@@ -22,7 +23,6 @@ import pandas
 import yaml
 
 import transit_feed
-import shutil
 
 
 # pylint: disable=missing-docstring,fixme
@@ -268,7 +268,7 @@ def generate_tiled_stops(dest_dir, stops, max_rows=None):
 
 
 def generate_tiled_stop_times(dest_dir, stop_times, trip_id, tiles):
-
+    # pylint: disable=too-many-locals
     tiles_num = len(tiles)
     tiles_id_format = '0' + str(len(str(tiles_num)))
 
@@ -355,7 +355,9 @@ class BaseTable(tuple):
             column[item] for column in self if column is not None]
         return type(self)(*values)
 
+
 def create_tree(table, index_columns, max_rows=128):
+    # pylint: disable=too-many-locals
     table_class = type(table)
     ndim = len(index_columns)
     tree = {}
@@ -389,7 +391,8 @@ def create_tree(table, index_columns, max_rows=128):
             stack.append((node['right'], right, level + 1))
             stack.append((node['left'], left, level + 1))
 
-    LOG.debug('Tree generated:\n%s', json.dumps(tree, indent=4, sort_keys=True))
+    LOG.debug('Tree generated:\n%s',
+              json.dumps(tree, indent=4, sort_keys=True))
     return tree, leaves
 
 

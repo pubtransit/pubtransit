@@ -6,7 +6,7 @@ BUILD_DIR = build
 INSTALL_DIR = /var/www/html
 
 include transit_www/www.mk
-include transit_feed/feed.mk
+include pubtransit/feed.mk
 
 deploy:
 	ansible-playbook provision.yaml

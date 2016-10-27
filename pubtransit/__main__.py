@@ -5,6 +5,6 @@ Created on 18 Oct 2016
 '''
 
 
-from transit_feed.feed import main
+from pubtransit.feed import main
 
 main()

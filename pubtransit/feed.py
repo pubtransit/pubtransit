@@ -1,8 +1,10 @@
 '''
 Created on 11 Oct 2016
 
-@author: fressi
+@author: Federico Ressi
 '''
+
+# pylint: disable=missing-docstring
 
 import argparse
 import collections
@@ -22,18 +24,14 @@ import numpy
 import pandas
 import yaml
 
-import transit_feed
-
-
-# pylint: disable=missing-docstring,fixme
-
+import pubtransit
 
 LOG = logging.getLogger(__name__)
 
 OUT_STREAM = sys.stdout
 
 TEMPLATE_MANAGER = jinja2.Environment(
-    loader=jinja2.PackageLoader(transit_feed.__name__, ''))
+    loader=jinja2.PackageLoader(pubtransit.__name__, ''))
 
 TARGET_METHODS = {}
 
@@ -42,8 +40,7 @@ DEFAULT_STOPS_PER_TILE = 128
 
 def main():
     logging.basicConfig(
-        level=logging.WARNING,
-        format="%(asctime)-15s | %(message)s")
+        level=logging.WARNING, format="%(asctime)-15s | %(message)s")
 
     parser = argparse.ArgumentParser(
         description='Departures transit feed compiler.')
@@ -126,10 +123,10 @@ MethodParameters = collections.namedtuple(
     'MethodParameters', ['site', 'feed', 'target_path'])
 
 
-@target_method("all")
-def make_all(args):
+@target_method("version")
+def print_version(args):
     # pylint: disable=unused-argument
-    raise NotImplementedError
+    OUT_STREAM.write(pubtransit.__version__ + '\n')
 
 
 @target_method("makefile")
@@ -154,9 +151,9 @@ def make_makefiles(args, site_file=None):
                 target=os.path.join(site["name"], feed["name"]),
                 url=url,
                 make_flags="--logging-level " + str(args.logging_level),
-                make_me='python -m transit_feed ' + ' '.join(
+                make_me='python -m pubtransit ' + ' '.join(
                     repr(arg) for arg in sys.argv[1:]),
-                script_name="transit_feed")
+                script_name="pubtransit")
             with open(target_path + ".mk", 'wt') as target_stream:
                 target_stream.write(target_make)
 

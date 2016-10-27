@@ -45,5 +45,5 @@ If you have some problem with the web site please report a [new issue](https://g
 ## Know issues & missing feature
 - [#2](https://github.com/pubtransit/transit/issues/2) Remaining time computation doesn't care about time zones.
 - [#3](https://github.com/pubtransit/transit/issues/3) It doesn't read calendar table from feed files.
-- Stop times feed file building is slow for big GPRS files.
+- [#4](https://github.com/pubtransit/transit/issues/4) Stop times feed file building is slow for big GPRS files.
 - It doesn't provide any real time data, only scheduled departures times.

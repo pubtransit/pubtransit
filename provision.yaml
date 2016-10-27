@@ -52,20 +52,20 @@
         become_user: root
         command: "python ./get-pip.py"
 
-      - name: ensure pip and setuptools are installed at the latest version
-        become: true
-        become_user: root
-        action: pip name="{{ item }}" state=latest
-        with_items:
-          - setuptools
-          - pip
-
       - name: delete get-pip.py
         file:
           state: absent
           path: ./get-pip.py
 
     when: pip_is_installed.rc != 0
+
+  - name: ensure pip and setuptools are installed at the latest version
+    become: true
+    become_user: root
+    action: pip name="{{ item }}" state=latest
+    with_items:
+      - setuptools
+      - pip
 
   - name: deploy transit source files
     synchronize:

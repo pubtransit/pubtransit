@@ -1,64 +1,93 @@
-- name: Provide www.pubtransit.org server
+- name: provide www.pubtransit.org server
   hosts: all
   remote_user: ubuntu
   vars:
     transit_dir: ~/transit
   tasks:
 
-  - name: Install some basic apt stuff
-    become: true
-    become_user: root
-    retries: 3
-    apt: pkg="{{item}}" state=latest
-         update_cache=yes cache_valid_time=3600
-    with_items:
-      - git
-      - build-essential
-      - libxslt1-dev
-      - python-setuptools
-      - python-dev
-      - apache2
-
-  - name: Ensure last pip is installed
-    become: true
-    become_user: root
-    retries: 3
-    easy_install:
-      name: pip
-      state: latest
-
-  - name: Ensure setuptools, pip, tox... are installed at the latest version
-    become: true
-    become_user: root
-    action: pip name="{{item}}" state=latest
-    retries: 3
-    with_items:
-      - setuptools
-      - tox
-
-  - name: Set host name
+  - name: set host name
     become: true
     become_user: root
     hostname: name=node01.pubtransit.org
 
-  - name: Fix proxy environment
+  - name: fix proxy environment
     become: true
     become_user: root
     script: provision/get_proxy_env.py /etc/profile.d/proxy.sh
 
-  - name: Deploy transit source files
-    synchronize: src=. dest=/home/ubuntu delete=yes
+  - name: update and upgrade apt packages
+    become: true
+    become_user: root
+    shell: DEBIAN_FRONTEND=noninteractive apt-get update -y && apt-get upgrade -y
 
-  - name: Intall transit python requirements
+  - name: install some basic apt stuff and upgrade installed packages
     become: true
     become_user: root
     retries: 3
-    pip: requirements=/home/ubuntu/transit/requirements.txt
+    apt:
+      pkg: "{{ item }}"
+      state: latest
+    with_items:
+      - git
+      - build-essential
+      - python-setuptools
+      - python-dev
+      - apache2
 
-  - name: Build feeds and html files
-    make: chdir=/home/ubuntu/transit target=all
+  - name: check to see if pip is already installed
+    command: "pip --version"
+    ignore_errors: true
+    register: pip_is_installed
+    changed_when: false
 
-  - name: Installd feeds and html files
+  - block:
+      - name: download get-pip.py
+        retries: 3
+        get_url:
+          url: https://bootstrap.pypa.io/get-pip.py
+          dest: ./
+
+      - name: install pip
+        become: true
+        become_user: root
+        command: "python ./get-pip.py"
+
+      - name: ensure pip and setuptools are installed at the latest version
+        become: true
+        become_user: root
+        action: pip name="{{ item }}" state=latest
+        with_items:
+          - setuptools
+          - pip
+
+      - name: delete get-pip.py
+        file:
+          state: absent
+          path: ./get-pip.py
+
+    when: pip_is_installed.rc != 0
+
+  - name: deploy transit source files
+    synchronize:
+      src: .
+      dest: /home/ubuntu
+      delete: yes
+
+  - name: intall transit python package
     become: true
     become_user: root
-    make: chdir=/home/ubuntu/transit target=install
+    retries: 3
+    pip:
+      name: /home/ubuntu/transit
+
+  - name: build feeds and html files
+    make:
+      chdir: /home/ubuntu/transit
+      target: all
+
+  - name: installd feeds and html files
+    become: true
+    become_user: root
+    make:
+      chdir: /home/ubuntu/transit
+      target: install

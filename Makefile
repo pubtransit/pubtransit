@@ -11,7 +11,13 @@ include pubtransit/feed.mk
 deploy:
 	ansible-playbook provision.yaml
 
-vagrant: build
+test_python:
+	tox
+
+test_install: build install
+	echo INSTALLED
+
+test_deploy: build
 	vagrant up --provision
 
 clean:

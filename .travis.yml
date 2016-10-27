@@ -1,12 +1,19 @@
-language: python
-python:
-    - 2.7
+sudo: false
 
-install:
-    - pip install -U pip tox setuptools coveralls
+matrix:
+  include:
+  - language: python
+    python: "2.7"
+    env: GOAL=test_python
+    install:
+      - pip install -U pip tox setuptools coveralls -r requirements.txt
+    after_success: coveralls --rcfile=.coveragerc
+  - language: python
+    python: "2.7"
+    install:
+      - apt-get install cython
+      - pip install -U pip setuptools -r requirements.txt
+    env: GOAL=test_install
 
 script:
-    - tox
-    - coveralls --rcfile=.coveragerc
-
-sudo: false
+    - make $GOAL

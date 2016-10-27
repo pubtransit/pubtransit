@@ -41,6 +41,6 @@ def main(args=None):
         out.write(application.get_greenpin())
 
     elif cmd == 'get-icon':
-        out.write(application.get_greenpin())
+        out.write(application.get_icon())
     else:
         sys.exit(-1)

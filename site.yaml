@@ -48,8 +48,23 @@ feed:
       - name: dualway
         path: google_transit_dualway.zip
 
+      - name: dublinbus
+        path: google_transit_dublinbus.zip
+
       - name: ferries
         path: google_transit_ferries.zip
 
+      - name: irishrail
+        path: google_transit_irishrail.zip
+
+      - name: luas
+        path: google_transit_luas.zip
+
+      - name: luasbus
+        path: google_transit_luasbus.zip
+
       - name: sro
         path: google_transit_sro.zip
+
+      - name: wexfordbus
+        path: google_transit_wexfordbus.zip

@@ -38,6 +38,8 @@ class Application(object):
         app.add_url_rule(rule='/', view_func=self.get_html, methods=['GET'])
         app.add_url_rule(rule='/greenpin.png', view_func=self.get_greenpin,
                          methods=['GET'])
+        app.add_url_rule(rule='/icon.png', view_func=self.get_icon,
+                         methods=['GET'])
         for feed in self._model.iter_feeds():
             app.add_url_rule(
                 rule=feed.rule, endpoint=feed.endpoint,
@@ -62,3 +64,7 @@ class Application(object):
     def get_greenpin(self):
         """It produce the Web application HTML."""
         return self._model.get_data_file('greenpin.png')
+
+    def get_icon(self):
+        """It produce the Web application HTML."""
+        return self._model.get_data_file('icon.png')

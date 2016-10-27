@@ -11,5 +11,8 @@ include transit_feed/feed.mk
 deploy:
 	ansible-playbook provision.yaml
 
+vagrant: build
+	vagrant up --provision
+
 clean:
 	rm -fR $(BUILD_DIR)

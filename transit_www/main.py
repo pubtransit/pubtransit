@@ -39,3 +39,8 @@ def main(args=None):
 
     elif cmd == 'get-greenpin':
         out.write(application.get_greenpin())
+
+    elif cmd == 'get-icon':
+        out.write(application.get_greenpin())
+    else:
+        sys.exit(-1)

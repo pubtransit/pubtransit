@@ -15,6 +15,7 @@ $(BUILD_DIR)/www/index.html:
 	mkdir -p $(@D)
 	python -m transit_www get-html > $@
 	python -m transit_www get-greenpin > $(@D)/greenpin.png
+	python -m transit_www get-icon > $(@D)/icon.png
 
 $(INSTALL_DIR)/index.html:
 	mkdir -p $(@D)

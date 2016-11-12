@@ -8,10 +8,12 @@ build_feed: {{ build_dir }}/{{ target }}/feed.gz
 	{{ make_me }}
 
 {{ build_dir }}/{{ target }}.zip:
+	@echo Get GTFS file: $@
 	mkdir -p $(@D)
-	wget -c "{{ url }}" -O "$@"
+	wget -c {{ url }} -O $@
 
 {{ build_dir }}/{{ target }}/feed.gz: {{ build_dir }}/{{ target }}.zip
+	@echo Build feed files from: $<
 	rm -fR $(@D)
 	python -m {{ script_name }} --target datastore {{ make_flags }} $< --dest $(@D)
 

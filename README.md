@@ -5,6 +5,11 @@ see the scheduled departure time of public transport around.
 All the code used to deploy the web page and the HTML/Javascript are hosted
 here.
 
+## CI Status
+[![Build Status](https://travis-ci.org/FedericoRessi/pubtransit.svg?branch=rename-package)](https://travis-ci.org/FedericoRessi/pubtransit)
+[![Coverage Status](https://coveralls.io/repos/github/FedericoRessi/pubtransit/badge.svg?branch=rename-package)](https://coveralls.io/github/FedericoRessi/pubtransit?branch=rename-package)
+
+
 ## Where to report problems
 
 If you have some problem with the web site please report a [new issue](https://github.com/pubtransit/transit/issues/new).

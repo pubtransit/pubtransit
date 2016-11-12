@@ -19,16 +19,16 @@ those files are required by the user.
 ## Feed files builder
 
 The Python builder scripts are all included into
-[transit_feed package](../transit_feed).
+[pubtransit package](../pubtransit).
 The script is designed to be used from inside the main project
-[Makefile](../Makefile) by implementing specified [make goals](../transit_feed/feed.mk).
+[Makefile](../Makefile) by implementing specified [make goals](../pubtransit/feed.mk).
 
 Public [GPRS files](https://developers.google.com/transit/gtfs/) are download
 from public web sites and then they are eaten by the feed builder implemented
-by [transit_feed.feed](https://github.com/pubtransit/transit/blob/master/transit_feed/feed.py)
+by [pubtransit.feed](https://github.com/pubtransit/transit/blob/master/pubtransit/feed.py)
 Python module.
 
-In directory [transit_feed/tests/sample-feed](transit_feed/tests/sample-feed)
+In directory [pubtransit/tests/sample-feed](pubtransit/tests/sample-feed)
 you can fin an example of the contend of a
 [GPRS Zip file](https://en.wikipedia.org/wiki/General_Transit_Feed_Specification).
 
@@ -36,7 +36,7 @@ you can fin an example of the contend of a
 width="60%" align="right">
 
 GPRS files are zip files containing some CSV file. Every CSV is a relational
-table. transit_feed package makes uses of [Pandas](http://pandas.pydata.org/)
+table. pubtransit package makes uses of [Pandas](http://pandas.pydata.org/)
 to open them and then uses [NumPy](http://www.numpy.org/) to make operations
 over the big column arrays.
 

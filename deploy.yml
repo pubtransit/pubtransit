@@ -1,0 +1,96 @@
+- name: Provide www.pubtransit.org Web server
+  hosts: all
+  remote_user: ubuntu
+  vars:
+    work_dir: /home/ubuntu/pubtransit
+    install_dir: /var/www/html
+    hostname: node01.pubtransit.org
+
+  tasks:
+
+  - name: set host name
+    become: true
+    become_user: root
+    hostname: name="{{ hostname }}"
+
+  - name: fix proxy environment
+    become: true
+    become_user: root
+    script: deploy/get_proxy_env.py /etc/profile.d/proxy.sh
+
+  - name: update and upgrade apt packages
+    become: true
+    become_user: root
+    shell: DEBIAN_FRONTEND=noninteractive apt-get update -y && apt-get upgrade -y
+
+  - name: install some basic apt stuff and upgrade installed packages
+    become: true
+    become_user: root
+    retries: 3
+    apt:
+      pkg: "{{ item }}"
+      state: latest
+    with_items:
+      - git
+      - build-essential
+      - python-setuptools
+      - python-dev
+      - apache2
+
+  - name: check to see if pip is already installed
+    command: "pip --version"
+    ignore_errors: true
+    register: pip_is_installed
+    changed_when: false
+
+  - block:
+      - name: download get-pip.py
+        retries: 3
+        get_url:
+          url: https://bootstrap.pypa.io/get-pip.py
+          dest: ./
+
+      - name: install pip
+        become: true
+        become_user: root
+        command: "python ./get-pip.py"
+
+      - name: delete get-pip.py
+        file:
+          state: absent
+          path: ./get-pip.py
+
+    when: pip_is_installed.rc != 0
+
+  - name: ensure pip and setuptools are installed at the latest version
+    become: true
+    become_user: root
+    action: pip name="{{ item }}" state=latest
+    with_items:
+      - setuptools
+      - pip
+
+  - name: deploy source files to "{{ work_dir }}"
+    synchronize:
+      src: .
+      dest: /home/ubuntu
+      delete: yes
+
+  - name: intall transit python package
+    become: true
+    become_user: root
+    retries: 3
+    pip:
+      name: "{{ work_dir }}"
+
+  - name: build feeds and html files
+    make:
+      chdir: "{{ work_dir }}"
+      target: all
+
+  - name: installd feeds and html files
+    become: true
+    become_user: root
+    make:
+      chdir: "{{ work_dir }}"
+      target: install

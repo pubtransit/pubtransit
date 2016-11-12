@@ -1,6 +1,6 @@
 all: build
 
-.PHONY: all build install clean deploy test test_python test_deploy
+.PHONY: all build install clean deploy test test_python test_deploy test_install
 
 BUILD_DIR = build
 INSTALL_DIR = /var/www/html

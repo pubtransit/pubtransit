@@ -1,7 +1,70 @@
 feed:
 
+
+ - name: ch  # Switzerland
+   url: http://gtfs.geops.ch/dl
+   feeds:
+
+     - name: bus
+       path: gtfs_bus.zip
+
+     - name: train
+       path: gtfs_train.zip
+
+     - name: tram
+       path: gtfs_tram.zip
+
+     - name: ferries
+       path: gtfs_ferry.zip
+
+     - name: gondola
+       path: gtfs_gondola.zip
+
+
+ - name: dk  # Denmark
+   feeds:
+
+     - name: rejseplanen
+       url: http://labs.rejseplanen.dk/files/GTFS/GTFS.zip
+
+
  - name: es  # Spain
    feeds:
 
      - name: emt
        url: https://transitfeeds-data.s3-us-west-1.amazonaws.com/public/feeds/emt-madrid/212/20161003/gtfs.zip
+
+
+ - name: ie  # Ireland
+   url: http://www.transportforireland.ie/transitData
+   feeds:
+
+      - name: aircoach
+        path: google_transit_aircoach.zip
+
+      - name: buseireann
+        path: google_transit_buseireann.zip
+
+      - name: dualway
+        path: google_transit_dualway.zip
+
+      - name: dublinbus
+        path: google_transit_dublinbus.zip
+
+      - name: ferries
+        path: google_transit_ferries.zip
+
+      - name: irishrail
+        path: google_transit_irishrail.zip
+
+      - name: luas
+        path: google_transit_luas.zip
+
+      - name: luasbus
+        path: google_transit_luasbus.zip
+
+      - name: sro
+        path: google_transit_sro.zip
+
+      - name: wexfordbus
+        path: google_transit_wexfordbus.zip

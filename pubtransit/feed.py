@@ -77,7 +77,7 @@ def main():
         const=logging.DEBUG, default=None, help='Show debug messages.')
 
     parser.add_argument(
-        'files', type=str, default=['site.yaml'], nargs='*',
+        'files', type=str, default=['site.yml'], nargs='*',
         help='Feed file to extract feed rules from.')
 
     parser.add_argument(
@@ -131,7 +131,7 @@ def print_version(args):
 
 @target_method("makefile")
 def make_makefiles(args, site_file=None):
-    feeds_conf = read_yaml_file(site_file or 'site.yaml')
+    feeds_conf = read_yaml_file(site_file or 'site.yml')
     for site in feeds_conf['feed']:
         for feed in site["feeds"]:
             target_path = os.path.join(

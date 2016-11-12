@@ -1,4 +1,4 @@
-- name: Provide www.pubtransit.org Web server
+- name: Provide node01.pubtransit.org Web server
   hosts: all
   remote_user: ubuntu
   vars:
@@ -8,22 +8,22 @@
 
   tasks:
 
-  - name: set host name
+  - name: "set host name: {{ hostname }}"
     become: true
     become_user: root
     hostname: name="{{ hostname }}"
 
-  - name: fix proxy environment
+  - name: "fix proxy environment"
     become: true
     become_user: root
     script: deploy/get_proxy_env.py /etc/profile.d/proxy.sh
 
-  - name: update and upgrade apt packages
+  - name: "update and upgrade apt packages"
     become: true
     become_user: root
     shell: DEBIAN_FRONTEND=noninteractive apt-get update -y && apt-get upgrade -y
 
-  - name: install some basic apt stuff and upgrade installed packages
+  - name: "install apt packages"
     become: true
     become_user: root
     retries: 3
@@ -31,59 +31,61 @@
       pkg: "{{ item }}"
       state: latest
     with_items:
-      - git
-      - build-essential
-      - python-setuptools
-      - python-dev
       - apache2
+      - build-essential
+      - git
+      - python-dev
 
-  - name: check to see if pip is already installed
+  - name: "verify pip is present"
     command: "pip --version"
     ignore_errors: true
-    register: pip_is_installed
+    register: pip_is_present
     changed_when: false
 
-  - block:
-      - name: download get-pip.py
+  - when: pip_is_present.rc != 0
+    block:
+      - name: "download get-pip.py"
         retries: 3
         get_url:
           url: https://bootstrap.pypa.io/get-pip.py
           dest: ./
 
-      - name: install pip
+      - name: "install pip"
         become: true
         become_user: root
         command: "python ./get-pip.py"
 
-      - name: delete get-pip.py
+      - name: "delete get-pip.py"
         file:
           state: absent
           path: ./get-pip.py
 
-    when: pip_is_installed.rc != 0
-
-  - name: ensure pip and setuptools are installed at the latest version
+  - name: "upgrade pip and setuptools"
+    when: pip_is_present.rc == 0
     become: true
     become_user: root
-    action: pip name="{{ item }}" state=latest
+    pip:
+      name: "{{ item }}"
+      state: latest
     with_items:
-      - setuptools
       - pip
+      - setuptools
 
-  - name: deploy source files to "{{ work_dir }}"
+  - name: "deploy source files to {{ work_dir }}"
     synchronize:
       src: .
       dest: /home/ubuntu
       delete: yes
 
-  - name: intall transit python package
+  - name: "intall or upgrade transit python package and its dependencies"
     become: true
     become_user: root
     retries: 3
     pip:
       name: "{{ work_dir }}"
+      state: latest
 
-  - name: build feeds and html files
+  - name: "build feeds and html files"
     make:
       chdir: "{{ work_dir }}"
       target: all

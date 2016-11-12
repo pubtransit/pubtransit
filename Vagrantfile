@@ -37,7 +37,7 @@ Vagrant.configure(2) do |config|
   # Collectd will fail to install if it is not able to resolve the ip from its
   # hostname. Setting the host name here will make Vagrant configuring
   # /etc/hosts fixing this problem
-  config.vm.hostname = "www.transit.org"
+  config.vm.hostname = "node01.pubtransit.org"
 
   # Create a public network, which generally matched to bridged network.
   # Bridged networks make the machine appear as another physical device on
@@ -54,22 +54,14 @@ Vagrant.configure(2) do |config|
     vb.memory = "1024"
 
     # Set machine hostname
-    vb.name = "transit"
+    vb.name = "pubtransit"
   end
 
   # Use the same Proxy servers as the host machine
   if Vagrant.has_plugin?("vagrant-proxyconf")
-    require 'resolv'
-    Resolv.getaddresses("http_proxy")
-    if http_proxy
-      config.proxy.http = http_proxy
-    end
-    if https_proxy
-      config.proxy.https = https_proxy
-    end
-    if no_proxy
-      config.proxy.no_proxy = no_proxy
-    end
+    config.proxy.http = http_proxy or ""
+    config.proxy.https = https_proxy or ""
+    config.proxy.no_proxy = no_proxy or ""
   end
 
   # Use the same DNS server as the host machine

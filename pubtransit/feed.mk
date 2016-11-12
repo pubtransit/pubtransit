@@ -4,12 +4,12 @@ install: install_feed
 
 .PHONY: build_feed install_feed
 
-include $(shell python -m transit_feed --target makefile --debug \
+include $(shell python -m pubtransit --target makefile --debug \
     --build-dir $(BUILD_DIR)/feed)
 
 build_feed:
 	@echo Build index file
-	python -m transit_feed --target index --debug --build-dir $(BUILD_DIR)/feed
+	python -m pubtransit --target index --debug --build-dir $(BUILD_DIR)/feed
 
 install_feed:
 	@echo Install feed files

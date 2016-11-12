@@ -1,3 +1,4 @@
+Cython
 flask
 jinja2
 msgpack-python

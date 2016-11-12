@@ -19,7 +19,7 @@ import shutil
 from six.moves import urllib  # pylint: disable=import-error
 
 
-from transit_feed.feed import (
+from pubtransit.feed import (
     generate_tiled_stops, generate_tiled_stop_times, generate_routes,
     generate_trips, read_stops, read_stop_times, read_routes, read_trips)
 

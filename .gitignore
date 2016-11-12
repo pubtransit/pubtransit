@@ -88,13 +88,8 @@ ENV/
 # Rope project settings
 .ropeproject
 /user.yaml
-/user.yml
-/conf.yml
-/feeds/
-/.DS_Store
 
-# setup.py
+.DS_Store
 AUTHORS
 ChangeLog
-/provision.retry
-
+/deploy.retry

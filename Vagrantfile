@@ -1,5 +1,8 @@
 # -*- mode: ruby -*-
 
+# Vagrant script file to test deployment
+
+
 Vagrant.require_version ">= 1.7.0"
 
 # Takes proxy configuratiom from host environment
@@ -9,11 +12,6 @@ no_proxy = ENV["no_proxy"]
 if http_proxy or https_proxy
   require 'vagrant-proxyconf'
 end
-
-
-control_ip = "192.168.0.10"
-
-tenant_ip = "192.168.1.10"
 
 
 # All Vagrant configuration is done below. The "2" in Vagrant.configure
@@ -53,7 +51,7 @@ Vagrant.configure(2) do |config|
 
     # Customize the amount of memory on the VM. This ammout is recommended
     # to make OpenStack working.
-    vb.memory = "8192"
+    vb.memory = "1024"
 
     # Set machine hostname
     vb.name = "transit"
@@ -86,7 +84,7 @@ Vagrant.configure(2) do |config|
 
   # Run ansible playbook
   config.vm.provision "ansible" do |ansible|
-    ansible.playbook = "provision.yaml"
+    ansible.playbook = "deploy.yml"
     ansible.limit = "all"
   end
 

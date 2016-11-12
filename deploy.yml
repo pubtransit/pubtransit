@@ -1,19 +1,22 @@
-- name: provide www.pubtransit.org server
+- name: Provide www.pubtransit.org Web server
   hosts: all
   remote_user: ubuntu
   vars:
-    transit_dir: ~/transit
+    work_dir: /home/ubuntu/pubtransit
+    install_dir: /var/www/html
+    hostname: node01.pubtransit.org
+
   tasks:
 
   - name: set host name
     become: true
     become_user: root
-    hostname: name=node01.pubtransit.org
+    hostname: name="{{ hostname }}"
 
   - name: fix proxy environment
     become: true
     become_user: root
-    script: provision/get_proxy_env.py /etc/profile.d/proxy.sh
+    script: deploy/get_proxy_env.py /etc/profile.d/proxy.sh
 
   - name: update and upgrade apt packages
     become: true
@@ -67,7 +70,7 @@
       - setuptools
       - pip
 
-  - name: deploy transit source files
+  - name: deploy source files to "{{ work_dir }}"
     synchronize:
       src: .
       dest: /home/ubuntu
@@ -78,16 +81,16 @@
     become_user: root
     retries: 3
     pip:
-      name: /home/ubuntu/transit
+      name: "{{ work_dir }}"
 
   - name: build feeds and html files
     make:
-      chdir: /home/ubuntu/transit
+      chdir: "{{ work_dir }}"
       target: all
 
   - name: installd feeds and html files
     become: true
     become_user: root
     make:
-      chdir: /home/ubuntu/transit
+      chdir: "{{ work_dir }}"
       target: install

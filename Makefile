@@ -13,6 +13,9 @@ deploy:
 
 test: test_python test_deploy
 
+test_install: build install
+	echo INSTALLED
+
 test_python:
 	tox
 

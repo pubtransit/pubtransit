@@ -7,8 +7,8 @@ here:
  - [pubtransit](https://www.github.com/pubtransit/pubtransit).
 
 ## CI Status
-[![Build Status](https://travis-ci.org/FedericoRessi/pubtransit.svg?branch=master)](https://travis-ci.org/FedericoRessi/pubtransit)
-[![Coverage Status](https://coveralls.io/repos/github/FedericoRessi/pubtransit/badge.svg?branch=master)](https://coveralls.io/github/FedericoRessi/pubtransit?branch=master)
+[![Build Status](https://travis-ci.org/pubtransit/pubtransit.svg?branch=master)](https://travis-ci.org/pubtransit/pubtransit)
+[![Coverage Status](https://coveralls.io/repos/github/pubtransit/pubtransit/badge.svg?branch=master)](https://coveralls.io/github/pubtransit/pubtransit?branch=master)
 
 
 ## Where to report problems

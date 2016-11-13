@@ -17,7 +17,7 @@ cd pubtransit
 
 ### Edit site.yml
 
-Before starting building the feeds you have to edit [site.yml](site.yml)
+Before starting building the feeds you have to edit [site.yml](../site.yml)
 configuration file to specify which feeds to download and deploy on the Web page.
 The YAML file allows you to specify the location of public
 [GTFS](https://developers.google.com/transit/gtfs/)

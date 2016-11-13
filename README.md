@@ -8,8 +8,7 @@ here:
 
 ## CI Status
 [![Build Status](https://travis-ci.org/pubtransit/pubtransit.svg?branch=master)](https://travis-ci.org/pubtransit/pubtransit)
-[![Coverage Status](https://coveralls.io/repos/github/pubtransit/pubtransit/badge.svg?branch=master)](https://coveralls.io/github/pubtransit/pubtransit?branch=master)
-
+[![Coverage Status](https://coveralls.io/repos/github/pubtransit/pubtransit/badge.svg)](https://coveralls.io/github/pubtransit/pubtransit)
 
 ## Where to report problems
 

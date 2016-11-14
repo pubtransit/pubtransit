@@ -285,17 +285,15 @@ def generate_tiled_stop_times(dest_dir, stop_times, trip_id, tiles):
         tiled_stop_times_stop_id = stop_id_sorter[numpy.searchsorted(
             stop_id, tiled_stop_times.stop_id, sorter=stop_id_sorter)]
 
-        tiled_stop_times_tile_id = trip_id_sorter[numpy.searchsorted(
+        tiled_stop_times_trip_id = trip_id_sorter[numpy.searchsorted(
             trip_id, tiled_stop_times.trip_id,
             sorter=trip_id_sorter)]
-
-        tile_dir = os.path.join(dest_dir, format(tile_id, tiles_id_format))
 
         tile_dir = os.path.join(dest_dir, format(tile_id, tiles_id_format))
         store_column(
             tiled_stop_times_stop_id, tile_dir, 'stop_times', 'stop_id')
         store_column(
-            tiled_stop_times_tile_id, tile_dir, 'stop_times', 'trip_id')
+            tiled_stop_times_trip_id, tile_dir, 'stop_times', 'trip_id')
         store_column(
             tiled_stop_times.departure_minutes, tile_dir, 'stop_times',
             'departure_minutes')

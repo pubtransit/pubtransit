@@ -9,15 +9,15 @@ From the terminal type following to download the code and enter inside the root
 project folder:
 
 ```bash
-git clone https://github.com/pubtransit/transit.git
-cd transit
+git clone https://github.com/pubtransit/pubtransit.git
+cd pubtransit
 ```
 
 ## Build transit feeds and the Web page
 
 ### Edit site.yml
 
-Before starting building the feeds you have to edit [site.yml](site.yml)
+Before starting building the feeds you have to edit [site.yml](../site.yml)
 configuration file to specify which feeds to download and deploy on the Web page.
 The YAML file allows you to specify the location of public
 [GTFS](https://developers.google.com/transit/gtfs/)
@@ -79,11 +79,11 @@ To download and build feed files you need following tools:
 
 Python build scripts dependencies can be installed as follow:
 ```bash
-pip install --user -r /path/to/requirements.txt
+pip install --user -r requirements.txt
 ```
 or if you want to install them as super user please type following:
 ```bash
-sudo pip install -r /path/to/requirements.txt
+sudo pip install -r requirements.txt
 ```
 Please be prepared that in some cases dependencies compilation could
 fail because some project dependency could require C language tools chain to
@@ -108,12 +108,12 @@ containing required informations on demand and cache them for next use.
 
 The deploy scripts expect you to provide a ready to use running Ubuntu Server
 16.04 LTS. If you are not sure and you what to check what deployment scripts
-does please have a look to the [Ansible configuration file](provision.yaml).
+does please have a look to the [Ansible configuration file](deploy.yml).
 To understand listed operations and modify them you can read
 [Ansible documentation](http://docs.ansible.com/).
 
 To specify the direction of the Web server(s) edit Ansible
-[hosts](provision/hosts) configuration file.
+[hosts](deploy/hosts) configuration file.
 
 ### Prepare administrator machine
 

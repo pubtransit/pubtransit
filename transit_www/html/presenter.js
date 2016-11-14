@@ -23,18 +23,21 @@ Presenter.prototype.centerCurrentPosition = function() {
         });
     } else {
         log.error("Geolocation is not supported by your browser.");
+        self.view.centerPosition(self.model.getCenter());
     }
 }
 
 Presenter.prototype.setBounds = function(bounds) {
-    if (this.model.setBounds(bounds)) {
-        if (this.model.zoom >= this.MIN_ZOOM) {
-            log.debug("Set bounds:", this.model.bounds);
+    var model = this.model;
+    if (model.setBounds(bounds)) {
+        if (model.zoom >= this.MIN_ZOOM) {
+            log.debug("Set bounds:", model.bounds);
             if (!this._stopRequested) {
                 this._stopRequested = true;
                 var self = this;
                 window.setTimeout(function() {
-                    self.requestStops()
+                    self.feed.requestStops(model.bounds);
+                    self._stopRequested = false;
                 }, 500.);
             }
         }
@@ -52,12 +55,6 @@ Presenter.prototype.setZoom = function(zoom) {
         this.updateCurrentStop();
     }
     this.model.setZoom(zoom);
-}
-
-Presenter.prototype.requestStops = function() {
-    var self = this;
-    this.feed.requestStops(this.model.bounds);
-    this._stopRequested = false;
 }
 
 Presenter.prototype.receiveStops = function(stops) {
@@ -112,7 +109,7 @@ Presenter.prototype.receiveTrips = function(trips) {
 }
 
 Presenter.prototype.updateCurrentStop = function() {
-    this._updateCurrentStopUpdated = false; 
+    this._updateCurrentStopUpdated = false;
     if (!this._updateCurrentStopRequested) {
         this.view.updateCurrentStop();
         this._updateCurrentStopUpdated = true;

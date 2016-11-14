@@ -24,7 +24,7 @@ FeedClient.prototype.receiveIndex = function(index, bounds) {
 }
 
 FeedClient.prototype.requestTiles = function(path, bounds) {
-    log.debug("requestStopTiles:", path, bounds)
+    log.debug("requestTiles:", path, bounds)
     var self = this;
     this.from(path + '/tiles').select(
             ['tree', 'west', 'east', 'south', 'north']).fetch(function(tiles) {
